@@ -1,0 +1,13 @@
+{
+  "name": "dgcity",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server/local.mjs",
+    "test": "node tests/city-game.cjs && node --test tests/city-api.test.mjs"
+  }
+}
