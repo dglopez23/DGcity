@@ -22,14 +22,14 @@ npm test
 
 Carreteras con asfalto por encima de la acera; bases discretas; oficinas con tres paletas; depósitos octogonales y silos avanzados; refrigeración nuclear baja de ocho caras; luces nocturnas, partículas facetadas y smog desde el 20 % de contaminación. Materiales sencillos con rugosidad y brillo metálico moderados.
 
-La unión está disponible desde **nivel de ciudad 4**: cuatro viviendas del mismo nivel, todas **N4 o superior**, en un cuadrado 2×2, sin incendios. Inspecciona una y pulsa **Unir 4 viviendas**. Conserva la suma de capacidad, ocupación, consumos y mantenimiento; crea un conjunto N4 mejorable. Debug omite el requisito de nivel de ciudad.
+La unión está disponible desde **nivel de ciudad 4**: cuatro viviendas del mismo nivel, todas **N4 o superior**, en un cuadrado 2×2, sin incendios. Inspecciona una y pulsa **Unir 4 viviendas**. Conserva la suma de capacidad, ocupación, consumos y mantenimiento; crea un conjunto N4 mejorable.
 
 Sonidos gratuitos con sus créditos y licencias en `public/ciudad-viva/audio/CREDITS.md`.
 
 ## Interfaz y parcelas
 
-Pantalla de inicio, barra superior fija, Registro Urbano independiente y progreso con población, satisfacción y requisitos de servicios. La bancarrota pausa la partida y exige un rescate válido o terminar la ciudad.
+Pantalla de inicio con controles básicos, barra superior compacta y Registro Urbano en movimiento. El progreso urbano depende únicamente de población y satisfacción; el requisito de satisfacción aumenta linealmente del 60% al 85%.
 
 El mapa tiene 36×36 casillas. Las partidas de 30×24 y 36×24 se amplían conservando edificios y terreno; las casillas nuevas permanecen bloqueadas. Universidad 2×2, intercambiador 1×2 rotatorio y depuradoras junto a un río; las construcciones antiguas conservan su superficie hasta ampliarlas o trasladarlas. Los parques buscan espacio de expansión en todas las direcciones.
 
-Capital inicial: 9.500 €. Los ascensos requieren al menos 60% de satisfacción además de población y servicios. Controles de pausa, velocidad normal y triple; simulación con tiempo transcurrido también en segundo plano. Música y efectos tienen controles independientes. Los parques llegan a N8; el modo debug permite avanzar manualmente el nivel de ciudad.
+Capital inicial: 9.500 €. Los costes de construcción y mejora son propios de cada edificio y no aumentan por el nivel de ciudad. La cobertura integra capacidad y demanda de los servicios en una sola métrica; las depuradoras requieren investigación. Controles de pausa, velocidad normal y triple; tras 15 minutos sin actividad la simulación se pausa automáticamente. Música y efectos tienen controles independientes y los parques llegan a N8.
