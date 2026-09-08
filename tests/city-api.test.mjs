@@ -31,3 +31,5 @@ test('Format 3 saves expanded map, campus and rotated interchange; wastewater re
  assert.equal(validateCity({...state,format:2,buildings:[{...building,w:1,h:1}]}).buildings[0].legacyFootprint,true);
 });
 test('Square format 4 cities support N8 parks and preserve legacy rectangular formats',()=>{const s={...state,format:4,width:36,height:36,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[{type:'park',level:8,w:3,h:3,anchor:1000,rot:0,occ:0,fire:0,palette:0}]};const saved=validateCity(s);assert.equal(saved.height,36);assert.equal(saved.buildings[0].level,8);assert.throws(()=>validateCity({...s,height:24}));});
+
+test('Debug and revised loan terms persist while legacy loan interest stays unchanged',()=>{const saved=validateCity({...state,debug:true,loan:{principal:1000,months:1.5,remaining:1060,termsVersion:2}});assert(saved.debug);assert.equal(saved.loan.hourly,1060/(1.5*720));assert.equal(saved.loan.termsVersion,2);const old=validateCity({...state,loan:{principal:1000,months:3,remaining:1060}});assert.equal(old.loan.total,1060);assert.equal(old.loan.hourly,1060/(3*720));});
