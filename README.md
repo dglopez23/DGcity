@@ -30,4 +30,6 @@ Sonidos gratuitos con sus créditos y licencias en `public/ciudad-viva/audio/CRE
 
 Pantalla de inicio, barra superior fija, Registro Urbano independiente y progreso con población, satisfacción y requisitos de servicios. La bancarrota pausa la partida y exige un rescate válido o terminar la ciudad.
 
-El mapa tiene 36×24 casillas (20% más superficie). Las partidas de 30×24 se amplían al este conservando edificios y terreno. Universidad 2×2, intercambiador 1×2 rotatorio y depuradoras junto a un río; las construcciones antiguas conservan su superficie hasta ampliarlas o trasladarlas. Los parques buscan espacio de expansión en todas las direcciones.
+El mapa tiene 36×36 casillas. Las partidas de 30×24 y 36×24 se amplían conservando edificios y terreno; las casillas nuevas permanecen bloqueadas. Universidad 2×2, intercambiador 1×2 rotatorio y depuradoras junto a un río; las construcciones antiguas conservan su superficie hasta ampliarlas o trasladarlas. Los parques buscan espacio de expansión en todas las direcciones.
+
+Capital inicial: 9.500 €. Los ascensos requieren al menos 60% de satisfacción además de población y servicios. Controles de pausa, velocidad normal y triple; simulación con tiempo transcurrido también en segundo plano. Música y efectos tienen controles independientes. Los parques llegan a N8; el modo debug permite avanzar manualmente el nivel de ciudad.
