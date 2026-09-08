@@ -22,6 +22,12 @@ npm test
 
 Carreteras con asfalto por encima de la acera; bases discretas; oficinas con tres paletas; depósitos octogonales y silos avanzados; refrigeración nuclear baja de ocho caras; luces nocturnas, partículas facetadas y smog desde el 20 % de contaminación. Materiales sencillos con rugosidad y brillo metálico moderados.
 
-La unión está disponible desde **nivel de ciudad 4**: cuatro viviendas del mismo nivel en un cuadrado 2×2, sin incendios. Inspecciona una y pulsa **Unir 4 viviendas**. Conserva la suma de capacidad, ocupación, consumos y mantenimiento; crea un conjunto N4 mejorable. Debug omite el requisito de nivel de ciudad.
+La unión está disponible desde **nivel de ciudad 4**: cuatro viviendas del mismo nivel, todas **N4 o superior**, en un cuadrado 2×2, sin incendios. Inspecciona una y pulsa **Unir 4 viviendas**. Conserva la suma de capacidad, ocupación, consumos y mantenimiento; crea un conjunto N4 mejorable. Debug omite el requisito de nivel de ciudad.
 
 Sonidos gratuitos con sus créditos y licencias en `public/ciudad-viva/audio/CREDITS.md`.
+
+## Interfaz y parcelas
+
+Pantalla de inicio, barra superior fija, Registro Urbano independiente y progreso con población, satisfacción y requisitos de servicios. La bancarrota pausa la partida y exige un rescate válido o terminar la ciudad.
+
+El mapa tiene 36×24 casillas (20% más superficie). Las partidas de 30×24 se amplían al este conservando edificios y terreno. Universidad 2×2, intercambiador 1×2 rotatorio y depuradoras junto a un río; las construcciones antiguas conservan su superficie hasta ampliarlas o trasladarlas. Los parques buscan espacio de expansión en todas las direcciones.

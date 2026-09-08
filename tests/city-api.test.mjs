@@ -17,3 +17,15 @@ test('Reject malformed saves, overlaps, over-level buildings and construction on
 test('Logout invalidates server session, expiration rejected, login throttled',async()=>{assert.equal((await call('logout','POST',{},a.cookie)).status,200);assert.equal((await call('city','GET',undefined,a.cookie)).status,401);sqlite.prepare('UPDATE city_sessions SET expires_at=0').run();assert.equal((await call('city','GET',undefined,b.cookie)).status,401);let r;for(let i=0;i<13;i++)r=await call('login','POST',{username:'Missing',password:'not-a-password'});assert.equal(r.status,429);});
 test('Research and amortized loans persist while legacy saves acquire compatible defaults',()=>{const old=validateCity(state);assert.equal(old.researchPoints,0);assert.deepEqual(old.technologies,[]);assert.equal(old.loan,null);const latest=validateCity({...state,researchPoints:220,technologies:['solar'],loan:{principal:5000,months:6,remaining:5000}});assert.equal(latest.researchPoints,220);assert.deepEqual(latest.technologies,['solar']);assert(Math.abs(latest.loan.total-5600)<1e-8);assert(Math.abs(latest.loan.hourly-5600/(6*720))<1e-8);assert.throws(()=>validateCity({...state,loan:{principal:5000,months:6,remaining:1e9}}));});
 test('Expanded and fused buildings validate, retain city settings, and reject overlapping or undersized footprints',()=>{const base={type:'residential_block',level:4,baseLevel:8,anchor:200,rot:0,w:2,h:2,occ:3200,fire:0,palette:1,legacyFootprint:false};const save=validateCity({...state,format:2,cityName:'Nueva Toledo',dayNight:false,tutorialDone:true,buildings:[base]});assert.equal(save.buildings[0].occ,3200);assert.equal(save.buildings[0].baseLevel,8);assert.equal(save.cityName,'Nueva Toledo');assert.equal(save.dayNight,false);assert.throws(()=>validateCity({...state,format:2,buildings:[{...base,type:'coal',level:1,w:1,h:1,occ:0}]}));assert.throws(()=>validateCity({...state,format:2,buildings:[base,{...base,type:'commercial',anchor:201,w:1,h:1,occ:0}]}));const legacy=validateCity({...state,format:1,buildings:[{type:'coal',level:1,anchor:200,rot:0,occ:0,fire:0,palette:0}]});assert.equal(legacy.buildings[0].w,1);assert(legacy.buildings[0].legacyFootprint);});
+test('Format 3 saves expanded map, campus and rotated interchange; wastewater requires river adjacency',()=>{
+ const base={...state,format:3,width:36,landUnlocked:Array(864).fill(true),river:Array(864).fill(false),buildings:[],gameOver:true};
+ const building={type:'university',level:1,anchor:200,w:2,h:2,rot:0,occ:0,fire:0,palette:0};
+ assert.equal(validateCity({...base,buildings:[building]}).width,36);
+ assert.equal(validateCity(base).gameOver,true);
+ assert.throws(()=>validateCity({...base,buildings:[{...building,w:1,h:1}]}));
+ assert.equal(validateCity({...base,buildings:[{...building,type:'transit',rot:1,w:2,h:1}]}).buildings[0].w,2);
+ const plant={...building,type:'wastewater',w:1,h:1};
+ assert.throws(()=>validateCity({...base,buildings:[plant]}));
+ base.river[201]=true;assert.equal(validateCity({...base,buildings:[plant]}).buildings.length,1);
+ assert.equal(validateCity({...state,format:2,buildings:[{...building,w:1,h:1}]}).buildings[0].legacyFootprint,true);
+});
