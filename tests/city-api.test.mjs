@@ -24,9 +24,10 @@ test('Format 3 saves expanded map, campus and rotated interchange; wastewater re
  assert.equal(validateCity(base).gameOver,true);
  assert.throws(()=>validateCity({...base,buildings:[{...building,w:1,h:1}]}));
  assert.equal(validateCity({...base,buildings:[{...building,type:'transit',rot:1,w:2,h:1}]}).buildings[0].w,2);
- const plant={...building,type:'wastewater',w:1,h:1};
+ const plant={...building,type:'wastewater',w:1,h:2};
+ assert.equal(validateCity({...base,buildings:[{...plant,h:1}]}).buildings[0].legacyFootprint,true);
  assert.throws(()=>validateCity({...base,buildings:[plant]}));
- base.river[201]=true;assert.equal(validateCity({...base,buildings:[plant]}).buildings.length,1);
+ base.river[237]=true;assert.equal(validateCity({...base,buildings:[plant]}).buildings.length,1);
  assert.equal(validateCity({...state,format:2,buildings:[{...building,w:1,h:1}]}).buildings[0].legacyFootprint,true);
 });
 test('Square format 4 cities support N8 parks and preserve legacy rectangular formats',()=>{const s={...state,format:4,width:36,height:36,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[{type:'park',level:8,w:3,h:3,anchor:1000,rot:0,occ:0,fire:0,palette:0}]};const saved=validateCity(s);assert.equal(saved.height,36);assert.equal(saved.buildings[0].level,8);assert.throws(()=>validateCity({...s,height:24}));});
