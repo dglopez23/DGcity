@@ -42,3 +42,11 @@ test('Merged park saves preserve mixed levels and reject invalid dimensions, lev
  for(const change of [{parkLevels:[4,7]},{parkLevels:[5]},{level:4},{w:6,h:6},{w:6,h:2},{rot:1}]){save.buildings=[{...park,...change}];assert.throws(()=>validateCity(save));}
  save.buildings=[park,{type:'road',level:1,w:1,h:1,anchor:201,rot:0,palette:0,occ:0,fire:0}];assert.throws(()=>validateCity(save));
 });
+
+
+test('Industrial saves support rotated heavy factories, light factories and compact complexes',()=>{
+ const city={...state,format:4,width:36,height:36,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false)};
+ const building={level:3,anchor:200,rot:0,palette:2,occ:0,fire:0};
+ for(const [type,w,h,rot] of [['heavy_industry',1,2,0],['heavy_industry',2,1,1],['light_industry',1,1,0],['industrial_complex',2,2,0]]){city.buildings=[{...building,type,w,h,rot}];const saved=validateCity(city);assert.equal(saved.buildings[0].type,type);assert.equal(saved.buildings[0].w,w);assert.equal(saved.buildings[0].palette,2);}
+ for(const b of [{type:'heavy_industry',w:1,h:1},{type:'light_industry',w:2,h:2},{type:'industrial_complex',w:1,h:2},{type:'heavy_industry',w:1,h:2,level:6}]){city.buildings=[{...building,...b}];assert.throws(()=>validateCity(city));}
+});

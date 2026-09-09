@@ -349,6 +349,11 @@ html,body{height:100%;overflow:hidden}.app{position:relative;padding:0;margin:0;
             <div class="bar"><i id="waterBar"></i></div>
             <div class="sub" id="waterStatus">Sin demanda</div>
           </div>
+          <div class="utilityLine" id="goodsUtility" hidden>
+            <div class="utilityHead"><span>Mercancías</span><b id="goodsText">0 / 0</b></div>
+            <div class="bar"><i id="goodsBar"></i></div>
+            <div class="sub" id="goodsStatus">Producción / demanda · sin almacenes</div>
+          </div>
           <div class="utilityLine" id="researchUtility" hidden>
             <div class="utilityHead"><span>Investigación</span><b id="researchText">0 / 0</b></div>
             <div class="bar"><i id="researchBar"></i></div>
@@ -449,6 +454,56 @@ DEF.residential.cap=[0,18,30,52,90,160,280,480,800];
 DEF.residential.power=DEF.residential.cap.map(n=>Math.round(n/6*100)/100);
 DEF.residential.water=DEF.residential.cap.map(n=>Math.round(n/9*100)/100);
 DEF.wastewater.desc='Recupera agua útil y reduce de forma moderada la contaminación: 180 de agua y −8 de contaminación en N1.';
+// Continuous industrial capacity: no inventory or stockpiling.
+for(const [type,name,unlock,price,base] of [
+ ['heavy_industry','Industria pesada',2,4200,{jobs:65,goods:34,income:48,power:10,water:7,upkeep:10,pollution:5}],
+ ['light_industry','Industria ligera',4,10500,{jobs:48,goods:27,income:62,power:8,water:3,upkeep:9,pollution:1.6}]
+]){
+ const d={name,unlock,price,max:5,key:'Industria y mercancías',desc:type==='heavy_industry'?'Manufactura intensiva: mucho empleo y mercancías, con emisiones moderadas.':'Manufactura avanzada: menos volumen, mayor beneficio y menos emisiones.',effect:`${base.goods} mercancías · ${base.jobs} empleos`};
+ for(const [k,v] of Object.entries(base))d[k]=Array.from({length:9},(_,l)=>l?Math.round(v*Math.pow(k==='pollution'?1.30:k==='upkeep'?1.45:1.48,l-1)*100)/100:0);
+ d.jobs=d.jobs.map(Math.round);DEF[type]=d;
+}
+DEF.industrial_complex={...DEF.heavy_industry,name:'Complejo industrial',unlock:3,price:DEF.heavy_industry.price*4};
+for(const k of ['jobs','goods','income','power','water','upkeep','pollution'])DEF.industrial_complex[k]=DEF.heavy_industry[k].map(n=>n*4);
+for(const type of ['recycling','wastewater'])DEF[type].pollutionReduce=DEF[type].pollutionReduce.map(n=>Math.round(n*1.8*100)/100);
+DEF.wastewater.desc='Recupera agua y reduce contaminación: 180 de agua y −14,4 de contaminación en N1.';
+DEF.recycling.desc='Reduce contaminación. Sus molestias solo afectan a viviendas a cuatro casillas o menos.';
+for(const type of ['commercial','office'])DEF[type].goods=DEF[type].jobs.map(n=>Math.round(n*(type==='commercial'?.22:.08)*100)/100);
+for(const [type,base] of [['university',6],['hospital',8]])DEF[type].goods=Array.from({length:9},(_,l)=>l?Math.round(base*Math.pow(1.35,l-1)*100)/100:0);
+function isIndustry(b){return ['heavy_industry','light_industry','industrial_complex'].includes(b?.type);}
+function goodsDemand(type,level=1){return isIndustry({type})?0:DEF[type]?.goods?.[level]||0;}
+function goodsFactor(b){return goodsDemand(b.type,b.level)? .7+.3*(b.goodsCoverage||0):1;}
+function goodsRequirement(type,level=1,previous=0){
+ return ['hospital','university'].includes(type)||(previous&&((type==='commercial'&&level>=4)||(type==='office'&&level>=3)))?Math.max(0,goodsDemand(type,level)-(previous?goodsDemand(type,previous):0)):0;
+}
+function goodsFree(c){const g=S.goodsByComponent?.[c];return g?Math.max(0,g.capacity-g.demand):0;}
+function goodsAvailableAnywhere(){return Math.max(0,...Object.keys(S.goodsByComponent||{}).map(goodsFree));}
+function goodsCanPlace(type,level,cells,previous=0){
+ const required=goodsRequirement(type,level,previous);if(S.debug||!required)return true;
+ const rc=roadComponents(),probe={type,anchor:cells[0],cells};return goodsFree(buildingComponent(probe,rc.comp))+1e-8>=required;
+}
+let goodsRoutes=[];
+function computeGoods(buildings,comp,powerRatio,waterRatio){
+ const groups={};goodsRoutes=[];S.goodsCap=0;S.goodsUse=0;S.goodsDelivered=0;
+ for(const b of uniqueBuildings()){b.goodsOutput=0;b.goodsReceived=0;b.goodsCoverage=0;b.industryEfficiency=0;}
+ for(const b of buildings){const c=buildingComponent(b,comp);if(c<0)continue;const d=buildingDef(b),g=groups[c]??={capacity:0,demand:0,producers:[],consumers:[]};
+  if(isIndustry(b)){b.industryEfficiency=clamp((b.workers||0)/(d.jobs[b.level]||1),0,1)*Math.min(powerRatio,waterRatio)*(b.fire?.35:1);b.goodsOutput=d.goods[b.level]*b.industryEfficiency;g.capacity+=b.goodsOutput;g.producers.push(b);}
+  const demand=goodsDemand(b.type,b.level);if(demand){g.demand+=demand;g.consumers.push(b);}
+ }
+ for(const [c,g] of Object.entries(groups)){
+  S.goodsCap+=g.capacity;S.goodsUse+=g.demand;
+  const ratio=g.demand?Math.min(1,g.capacity/g.demand):1,producers=g.producers.filter(b=>b.goodsOutput>1e-8).sort((a,b)=>a.anchor-b.anchor);let index=0,remaining=producers[0]?.goodsOutput||0;
+  for(const b of g.consumers.sort((a,b)=>a.anchor-b.anchor)){
+   let pending=goodsDemand(b.type,b.level)*ratio;
+   while(pending>1e-8&&index<producers.length){const factory=producers[index],quantity=Math.min(pending,remaining),src=roadAccessCells(factory).filter(r=>comp[r]===Number(c)),targets=new Set(roadAccessCells(b).filter(r=>comp[r]===Number(c))),path=shortestRoadPath(src,targets);
+    if(path){b.goodsReceived+=quantity;goodsRoutes.push({path,quantity,source:factory.anchor,target:b.anchor});}
+    pending-=quantity;remaining-=quantity;if(remaining<=1e-8){index++;remaining=producers[index]?.goodsOutput||0;}
+   }
+   b.goodsCoverage=clamp(b.goodsReceived/goodsDemand(b.type,b.level),0,1);S.goodsDelivered+=b.goodsReceived;
+  }
+ }
+ S.goodsByComponent=Object.fromEntries(Object.entries(groups).map(([c,g])=>[c,{capacity:g.capacity,demand:g.demand}]));
+}
 DEF.residential_block={...DEF.residential,name:'Conjunto residencial',price:DEF.residential.price*4,unlock:4,max:8};
 const complexDefinitions=new Map();
 function isHome(b){return b?.type==='residential'||b?.type==='residential_block';}
@@ -469,7 +524,7 @@ function buildingDef(b){
  for(const key of ['cap','power','water','upkeep'])d[key]=Array.from({length:9},(_,level)=>{if(!level)return 0;const source=base+level-4;return 4*DEF.residential[key][Math.max(1,Math.min(8,source))]*Math.pow(1.35,Math.max(0,source-8));});
  complexDefinitions.set(base,d);return d;
 }
-function buildingUpgradeCost(b){if(b.parkLevels)return parkLevelsAt(b).reduce((sum,n)=>sum+(n<8?upgradeCost('park',n):0),0);if(b.type==='road')return upgradeCost('road',b.level)*(S.river[b.anchor]?2:1);if(b.type!=='residential_block')return upgradeCost(b.type,b.level);const source=(b.baseLevel||4)+b.level-4;return 4*upgradeCost('residential',Math.min(7,source))*Math.pow(1.5,Math.max(0,source-7));}
+function buildingUpgradeCost(b){if(b.type==='industrial_complex')return 4*upgradeCost('heavy_industry',b.level);if(b.parkLevels)return parkLevelsAt(b).reduce((sum,n)=>sum+(n<8?upgradeCost('park',n):0),0);if(b.type==='road')return upgradeCost('road',b.level)*(S.river[b.anchor]?2:1);if(b.type!=='residential_block')return upgradeCost(b.type,b.level);const source=(b.baseLevel||4)+b.level-4;return 4*upgradeCost('residential',Math.min(7,source))*Math.pow(1.5,Math.max(0,source-7));}
 DEF.residential.desc='Densifica la parcela con mejoras graduales. Construir más viviendas sigue siendo más barato por habitante.';
 DEF.office.desc='Empleo de alta densidad. La formación y las universidades mejoran su productividad; complementa al comercio.';
 const CORE_X0=Math.floor(W/2)-2,CORE_X1=CORE_X0+4,CORE_Z0=Math.floor(H/2)-2,CORE_Z1=CORE_Z0+4;
@@ -490,7 +545,7 @@ function landPrice(i){
   // La distancia encarece el suelo sin bloquear la expansión horizontal.
   return Math.round(300*Math.pow(1.28,d-1)+24*d*d);
 }
-const ORDER=["road","residential","commercial","park","water","coal","school","clinic","library","police","recycling","wastewater","research","fire","solar","office","transit","university","hospital","nuclear"];
+const ORDER=["road","residential","commercial","park","water","coal","heavy_industry","school","clinic","library","police","recycling","wastewater","research","light_industry","fire","solar","office","transit","university","hospital","nuclear"];
 const STARTER_POWER_CAP=32; // conexión inicial suficiente para alcanzar N2; no ocupa parcela
 
 // Variantes cromáticas completas: cambian color, nunca geometría.
@@ -505,8 +560,14 @@ const COMMERCIAL_PALETTES=[
  {walls:['#7ba0c0','#54819f','#3b6286','#2e4668'],accent:'#ec935e',window:'#94c9dd',trim:'#d2dbdc'}
 ];
 const OFFICE_PALETTES=[{walls:['#477c90','#749dab'],trim:'#b4c6cb',window:'#8dc6db'},{walls:['#626d89','#949ab1'],trim:'#c5c6d3',window:'#b3c0e0'},{walls:['#8c7960','#b4a48c'],trim:'#d4c9b6',window:'#9bbfc1'}];
+const INDUSTRIAL_PALETTES=[
+ {walls:['#aa7962','#c79b7e'],roof:'#53676b',trim:'#bedce0',window:'#86bbc9',accent:'#e7ac61'},
+ {walls:['#8b9894','#bac2b3'],roof:'#485e70',trim:'#758d91',window:'#9bcbd6',accent:'#c99860'},
+ {walls:['#8e8276','#b3a794'],roof:'#556b63',trim:'#bedce0',window:'#7daabf',accent:'#ce8b62'}
+];
 function buildingPalette(b){
   const n=(b.palette??((b.anchor||0)%3))%3;
+  if(isIndustry(b))return INDUSTRIAL_PALETTES[n];
   if(isHome(b))return RESIDENTIAL_PALETTES[n];
   if(b.type==="commercial")return COMMERCIAL_PALETTES[n];
   if(b.type==="office")return OFFICE_PALETTES[n];
@@ -533,7 +594,7 @@ function generateRiver(seed){
 }
 function newState(){
  const mapSeed=Math.floor(Math.random()*1000000);
- return{cityName:'Mi ciudad',dayNight:true,tutorialDone:false,manualRotation:null,mapSeed,river:generateRiver(mapSeed),layer:'none',roadAction:'build',researchPoints:0,technologies:[],loan:null,
+ return{cityName:'Mi ciudad',dayNight:true,tutorialDone:false,manualRotation:null,mapSeed,river:generateRiver(mapSeed),layer:'none',roadAction:'build',goodsCap:0,goodsUse:0,goodsDelivered:0,goodsByComponent:{},researchPoints:0,technologies:[],loan:null,
     grid:Array.from({length:W*H},()=>null),landUnlocked:makeInitialLand(),
     debug:false,money:9500,day:8,year:1,tax:10,cityLevel:1,tool:"inspect",selected:null,selectedLand:null,
     pop:0,health:55,education:25,security:65,fireSafety:70,pollution:0,happiness:60,
@@ -603,9 +664,9 @@ function cellFromWorld(x,z){
 function neighbors(i){return CELL_NEIGHBORS[i]||[];}
 function footprint(type,rot=0,level=1){
  if(type==='park')return {w:level>=5?3:2,h:level>=5?3:2};
- if(['residential_block','recycling','university'].includes(type))return {w:2,h:2};
+ if(['residential_block','industrial_complex','recycling','university'].includes(type))return {w:2,h:2};
  if(['coal','hospital','nuclear'].includes(type))return rot%2?{w:1,h:2}:{w:2,h:1};
- if(['solar','transit','wastewater'].includes(type))return rot%2?{w:2,h:1}:{w:1,h:2};
+ if(['solar','transit','wastewater','heavy_industry'].includes(type))return rot%2?{w:2,h:1}:{w:1,h:2};
  return {w:1,h:1};
 }
 function savedFootprint(b,format=2){if(b.w&&b.h)return {w:b.w,h:b.h};if(b.type==='wastewater')return {w:1,h:1};if(format<3&&['university','transit'].includes(b.type))return {w:1,h:1};if(format===1&&['coal','hospital','nuclear','recycling'].includes(b.type))return {w:1,h:1};return footprint(b.type,b.rot,b.level);}
@@ -613,7 +674,7 @@ function randomRotation(type){return 0;}
 function placementRotation(anchor,type,ignore=null){
  if(ignore?.parkLevels)return 0;
  if(type==='road')return 0;
- if(S.manualRotation!=null&&['coal','hospital','nuclear','solar','transit','wastewater'].includes(type))return S.manualRotation;
+ if(S.manualRotation!=null&&['coal','hospital','nuclear','solar','transit','wastewater','heavy_industry'].includes(type))return S.manualRotation;
  const options=[];
  for(let r=0;r<4;r++){
   const {fp,cells}=getFootprintCellsFromAnchor(anchor,type,r,ignore?.level||1),a=coord(anchor);
@@ -674,8 +735,8 @@ const TECHNOLOGIES={solar:{points:.25,label:'Energía solar'},wastewater:{points
 function researchDemand(type,level=1){return (TECHNOLOGIES[type]?.points||0)*Math.pow(1.35,level-1);}
 function researchFactor(b){return TECHNOLOGIES[b.type]?(b.researchEfficiency??1):1;}
 function buildPrice(type){return Math.round(DEF[type].price);}
-function buildingLocked(type){return !S.debug&&(S.cityLevel<DEF[type].unlock||(TECHNOLOGIES[type]&&(S.researchCap||0)-(S.researchUse||0)+1e-8<researchDemand(type)));}
-function buildingLockText(type){return S.cityLevel<DEF[type].unlock?`Ciudad N${DEF[type].unlock}`:`Requiere ${researchDemand(type).toFixed(2)} de investigación libre`;}
+function buildingLocked(type){return !S.debug&&(goodsAvailableAnywhere()+1e-8<goodsRequirement(type)||S.cityLevel<DEF[type].unlock||(TECHNOLOGIES[type]&&(S.researchCap||0)-(S.researchUse||0)+1e-8<researchDemand(type)));}
+function buildingLockText(type){return S.cityLevel<DEF[type].unlock?`Ciudad N${DEF[type].unlock}`:goodsAvailableAnywhere()+1e-8<goodsRequirement(type)?`Requiere ${goodsRequirement(type).toFixed(1)} mercancías libres en una red conectada`:`Requiere ${researchDemand(type).toFixed(2)} de investigación libre`;}
 function unlockTechnology(){return false;}
 function currentResearchTarget(){return null;}
 // Match the employment allocation used by calc; research is a capacity, never a stock.
@@ -731,7 +792,10 @@ function renderResearchAndLoan(){
  $('#researchBar').style.width=(demand?Math.min(100,capacity/demand*100):100)+'%';$('#researchBar').style.background=capacity<demand?'var(--red)':'var(--cyan)';
  $('#researchStatus').textContent=`Oferta / consumo · libres ${Math.max(0,capacity-demand).toFixed(2)} · no se acumula`;
  $('#researchChoices').hidden=true;
- const key=Object.keys(TECHNOLOGIES).map(buildingLocked).join(',');if(key!==researchUIKey){researchUIKey=key;renderPalette();}
+ $('#goodsUtility').hidden=!S.debug&&S.cityLevel<2;$('#goodsText').textContent=`${(S.goodsCap||0).toFixed(1)} / ${(S.goodsUse||0).toFixed(1)}`;
+ $('#goodsBar').style.width=((S.goodsUse||0)?Math.min(100,(S.goodsDelivered||0)/S.goodsUse*100):100)+'%';$('#goodsBar').style.background=(S.goodsDelivered||0)+1e-8<(S.goodsUse||0)?'var(--red)':'var(--cyan)';
+ $('#goodsStatus').textContent=`Producción / demanda · entregadas ${(S.goodsDelivered||0).toFixed(1)} · distribución por carretera`;
+ const key=ORDER.map(buildingLocked).join(',');if(key!==researchUIKey){researchUIKey=key;renderPalette();}
  $('#loanPanel').hidden=S.debug||(!S.loan&&S.money>0);$('#loanForm').hidden=!!S.loan;
  $('#loanStatus').textContent=S.loan?`Pendiente: ${euro(S.loan.remaining)} · ${hourly(S.loan.hourly)} · ${Math.ceil(S.loan.remaining/S.loan.hourly/24)} días restantes`:`Solo en bancarrota · límite ${euro(loanLimit())} · un préstamo a la vez`;
  $('#repayLoan').hidden=!S.loan;$('#repayLoan').disabled=!S.loan||S.money<S.loan.remaining;
@@ -744,8 +808,9 @@ function renderResearchAndLoan(){
 function maxAllowedLevel(type){
  const d=DEF[type];if(S.debug)return d.max;
  if(S.cityLevel<d.unlock)return 0;if(type==='residential_block')return Math.max(4,Math.min(8,S.cityLevel));
+ if(type==='industrial_complex')return maxAllowedLevel('heavy_industry');
  if(type==='water')return Math.min(d.max,S.cityLevel+1);
- const start={solar:2,office:3,research:2,wastewater:2,university:2,hospital:2}[type]||1;
+ const start={light_industry:2,solar:2,office:3,research:2,wastewater:2,university:2,hospital:2}[type]||1;
  if(d.unlock===8)return d.max;
  return Math.min(d.max,start+Math.ceil((S.cityLevel-d.unlock)*(d.max-start)/(8-d.unlock)));
 }
@@ -836,12 +901,12 @@ function computeTraffic(buildings,comp){
     if(["school","library","university"].includes(b.type))addRoads(maps.education,c,roads);
     if(["clinic","hospital"].includes(b.type))addRoads(maps.health,c,roads);
     if(["park","commercial","library","transit"].includes(b.type))addRoads(maps.leisure,c,roads);
-    if(["coal","nuclear","recycling","wastewater","water","solar"].includes(b.type))addRoads(maps.industry,c,roads);
+    if(["coal","nuclear","recycling","wastewater","water","solar","heavy_industry","light_industry","industrial_complex"].includes(b.type))addRoads(maps.industry,c,roads);
   }
 
   const transitRelief=clamp(buildings.filter(b=>b.type==="transit"&&operational(b.anchor)).reduce((s,b)=>s+(DEF.transit.trafficRelief?.[b.level]||0)*(b.serviceEfficiency??1),0),0,.58);
   const carFactor=1-transitRelief;
-  function addLoad(path,amount){if(!path||amount<=0)return;if(path.length>1)trafficRoutes.push({path,amount});for(const r of path)loads[r]=(loads[r]||0)+amount;}
+  function addLoad(path,amount,kind=null,source=null,target=null){if(!path||amount<=0)return;if(path.length>1)trafficRoutes.push({path,amount,kind,source,target});for(const r of path)loads[r]=(loads[r]||0)+amount;}
   function nearestFromBuilding(b,targetMap,amount){
     const c=buildingComponent(b,comp),src=roadAccessCells(b); if(c<0||!src.length)return;
     const targets=targetMap[c]; if(!targets||!targets.size)return;
@@ -886,6 +951,7 @@ function computeTraffic(buildings,comp){
   serviceRoutes(["coal","nuclear"],maps.industry,.75,0,.0010,2);       // suministro/mantenimiento energético
   serviceRoutes(["school","university"],maps.residential,.35,.00065,0,3); // buses y personal
 
+  for(const route of goodsRoutes)addLoad(route.path,route.quantity*.12,'freight',route.source,route.target);
   let sum=0,n=0;
   for(const b of buildings)if(b.type==="road"){
     const load=loads[b.anchor]||0;
@@ -983,7 +1049,8 @@ function localResidentialSatisfaction(home,buildings,cityBase){
     const d=gridDistance(home,o);
     if(o.type==='park'){const c=centerGrid(home);for(const section of parkSections(o)){const distance=Math.hypot(c.x-section.x,c.z-section.z);if(distance<5.2)s+=Math.min(8,DEF.park.happiness[section.level])*1.25*(1-distance/5.2);}}
     if(o.type==="library"&&d<4.5)s+=(DEF.library.happiness?.[o.level]||2)*(o.serviceEfficiency??1)*1.2*(1-d/4.5);
-    const nuisance={coal:[12,4.5],recycling:[8,3.8],wastewater:[12,4.5],nuclear:[7,4.2],transit:[4,2.8]};
+    if(o.type==='recycling'&&d<=4)s-=8*(1-d/5);
+    const nuisance={heavy_industry:[6,4],industrial_complex:[10,4],light_industry:[2,2.5],coal:[12,4.5],wastewater:[12,4.5],nuclear:[7,4.2],transit:[4,2.8]};
     if(nuisance[o.type]){const [power,r]=nuisance[o.type];if(d<r)s-=power*(1-d/r)}
     if(o.type==="commercial"&&d<2.5)s+=1.5*(1-d/2.5);
   }
@@ -1010,7 +1077,7 @@ function localServices(homes,buildings,pollution,powerRatio=1,waterRatio=1){
    const weights=homes.map(h=>(floor+(1-floor)*Math.exp(-gridDistance(h,b)/range))*(operational(h.anchor)?1:.35));
    const denominator=weights.reduce((a,w,i)=>a+w*Math.max(1,homes[i].occ||0),0);
    if(!denominator)continue;
-   homes.forEach((h,i)=>{ratios[i]+=d.coverage[b.level]*serviceEfficiency(b.type,powerRatio,waterRatio)*researchFactor(b)*weights[i]/denominator;});
+   homes.forEach((h,i)=>{ratios[i]+=d.coverage[b.level]*serviceEfficiency(b.type,powerRatio,waterRatio)*researchFactor(b)*goodsFactor(b)*weights[i]/denominator;});
   }
   let weighted=0,total=0;
   homes.forEach((h,i)=>{
@@ -1079,6 +1146,8 @@ function calc(){
    employed+=used;emps.forEach((b,i)=>b.workers=alloc[i]);
   }
   const unemployed=workforce-employed,inactive=pop-workforce,unemployment=workforce?100*unemployed/workforce:0;
+  computeGoods(buildings,rc.comp,powerRatio,waterRatio);
+  for(const b of buildings){if(isIndustry(b))pollution-=(buildingDef(b).pollution[b.level]||0)*(1-b.industryEfficiency);if(goodsDemand(b.type,b.level)&&buildingDef(b).serviceKind)b.serviceEfficiency*=goodsFactor(b);}
   computeTraffic(buildings,rc.comp);
 
   const educationUnlocked=S.cityLevel>=DEF.school.unlock,healthUnlocked=S.cityLevel>=DEF.clinic.unlock,securityUnlocked=S.cityLevel>=DEF.police.unlock,fireUnlocked=S.cityLevel>=DEF.fire.unlock;
@@ -1111,11 +1180,12 @@ function calc(){
      penalize('Robos activos',S.crimeDays>0?.12:0);
      const environment=clamp(1-reasons.reduce((a,r)=>a+r.penalty,0),.65,1);
      const supply=Math.min(powerRatio,waterRatio);
-     b.currentIncome=commercialRevenue(d.income[l],b.workers,workerCap,supply,environment);
-     b.incomeBreakdown={base:d.income[l],staffBase:d.income[l]*workerRatio,workerRatio,supply,environment,reasons};
+     b.currentIncome=commercialRevenue(d.income[l],b.workers,workerCap,supply,environment)*goodsFactor(b);
+     b.incomeBreakdown={base:d.income[l],staffBase:d.income[l]*workerRatio,workerRatio,supply,environment,goods:goodsFactor(b),reasons};
+    }else if(isIndustry(b)){b.currentIncome=d.income[l]*b.industryEfficiency;
     }else{
      let eff=workerRatio*powerRatio*waterRatio*(.55+education/220)*healthFactor*securityFactor*eduServiceFactor;
-     if(b.type==='office')eff*=clamp((education-20)/60,.08,1.05)*(.55+happiness/135)*(1+universityBoost);
+     if(b.type==='office')eff*=goodsFactor(b)*clamp((education-20)/60,.08,1.05)*(.55+happiness/135)*(1+universityBoost);
      if(S.crimeDays>0)eff*=.76;
      eff*=clamp(1-S.avgTraffic/170,.45,1);b.currentIncome=(d.income[l]||0)*eff;
     }
@@ -1125,7 +1195,7 @@ function calc(){
   const taxIncome=(employed*S.tax*.0042+pop*S.tax*.0018)*taxCompliance;
   cityIncome+=taxIncome;
   const rawPop=homes.reduce((a,h)=>a+(h.occ||0),0);
-  for(const b of buildings){const d=buildingDef(b),l=b.level;b.netIncome=(b.currentIncome||0)-(d.upkeep[l]||0)+(isHome(b)&&rawPop>0?taxIncome*(b.occ||0)/rawPop:0);b.netPollution=operational(b.anchor)?(d.pollution?.[l]||0)*researchFactor(b)-(d.pollutionReduce?.[l]||0)*(b.serviceEfficiency??1):0;}
+  for(const b of buildings){const d=buildingDef(b),l=b.level;b.netIncome=(b.currentIncome||0)-(d.upkeep[l]||0)+(isHome(b)&&rawPop>0?taxIncome*(b.occ||0)/rawPop:0);b.netPollution=operational(b.anchor)?(d.pollution?.[l]||0)*researchFactor(b)*(isIndustry(b)?b.industryEfficiency:1)-(d.pollutionReduce?.[l]||0)*(b.serviceEfficiency??1):0;}
   const serviceConsequences=[];
   const graceText=(type,label)=>{const r=graceRemaining(type);if(r>0&&r<Infinity)serviceConsequences.push(`${label}: periodo de gracia, faltan ${Math.ceil(r)} h para que una cobertura insuficiente pueda penalizar.`)};
   graceText("school","Educación");graceText("clinic","Sanidad");graceText("police","Seguridad");graceText("fire","Bomberos");
@@ -1251,9 +1321,19 @@ function fusionGroup(selected=S.selected){
  for(const dz of [0,-1])for(const dx of [0,-1]){const x=c.x+dx,z=c.z+dz;if(x<0||z<0||x+1>=W||z+1>=H)continue;const cells=[idx(x,z),idx(x+1,z),idx(x,z+1),idx(x+1,z+1)],buildings=cells.map(i=>S.grid[i]);if(new Set(buildings).size===4&&buildings.every(b=>b&&b.type==='residential'&&b.level===chosen.level&&!b.fire))return {anchor:cells[0],cells,buildings};}
  return null;
 }
-function mergeSelected(){const parks=parkFusionGroup();if(parks)return mergeParks(parks);const group=fusionGroup();if(!group){showNotice('Necesitas cuatro viviendas del mismo nivel (N4 o superior), ciudad N4 o superior, juntas en 2×2 y sin incendios.');return false;}
+function industrialFusionGroup(selected=S.selected){
+ const chosen=S.grid[selected];if(chosen?.type!=='heavy_industry'||chosen.fire||(!S.debug&&S.cityLevel<3))return null;
+ const group=[chosen],seen=new Set(group);
+ for(let i=0;i<group.length&&group.length<4;i++)for(const cell of buildingCells(group[i]))for(const n of neighbors(cell)){const b=S.grid[n];if(b?.type==='heavy_industry'&&b.level===chosen.level&&!b.fire&&!seen.has(b)&&group.length<4){seen.add(b);group.push(b);}}
+ if(group.length!==4)return null;
+ const candidates=[];for(const cell of group.flatMap(buildingCells)){const p=coord(cell);for(const dz of [0,-1])for(const dx of [0,-1]){if(p.x+dx<0||p.z+dz<0)continue;const anchor=idx(p.x+dx,p.z+dz),info=getFootprintCellsFromAnchor(anchor,'industrial_complex');if(info.cells.length===4&&info.cells.every(c=>S.landUnlocked[c]&&!S.river[c]&&(!S.grid[c]||seen.has(S.grid[c]))))candidates.push({anchor,cells:info.cells,overlap:info.cells.filter(c=>seen.has(S.grid[c])).length});}}
+ candidates.sort((a,b)=>Number(adjacentRoadForCells(b.cells))-Number(adjacentRoadForCells(a.cells))||b.overlap-a.overlap||a.anchor-b.anchor);
+ return candidates.length?{...candidates[0],buildings:group}:null;
+}
+function mergeIndustry(group){const first=group.buildings[0],b={type:'industrial_complex',level:first.level,anchor:group.anchor,w:2,h:2,cells:group.cells,rot:0,palette:first.palette||0,occ:0,fire:0,born:performance.now()};group.buildings.forEach(clearBuilding);b.cells.forEach(c=>S.grid[c]=b);addEvent('Cuatro fábricas se unen en un complejo de 2×2: conserva su capacidad y libera terreno.','good');soundFx('upgrade');renderAll();openPopup(b.anchor);return true;}
+function mergeSelected(){const industry=industrialFusionGroup();if(industry)return mergeIndustry(industry);const parks=parkFusionGroup();if(parks)return mergeParks(parks);const group=fusionGroup();if(!group){showNotice('Necesitas cuatro viviendas del mismo nivel (N4 o superior), ciudad N4 o superior, juntas en 2×2 y sin incendios.');return false;}
  const first=group.buildings[0],b={type:'residential_block',level:first.level,baseLevel:4,occ:group.buildings.reduce((a,h)=>a+h.occ,0),rot:0,anchor:group.anchor,w:2,h:2,cells:group.cells,palette:first.palette||0,fire:0,born:performance.now()};group.cells.forEach(i=>S.grid[i]=b);addEvent('Cuatro viviendas unidas: misma capacidad y mantenimiento, un conjunto de 2×2.','good');soundFx('upgrade');renderAll();openPopup(b.anchor);return true;}
-function rotatePlacement(){const type=S.moving?.type||S.tool;if(!['coal','hospital','nuclear','solar','transit','wastewater'].includes(type))return;S.manualRotation=((S.manualRotation??S.previewRot??0)+1)%4;S.previewRot=S.manualRotation;showNotice(`Orientación ${S.manualRotation*90}° · R para girar`);}
+function rotatePlacement(){const type=S.moving?.type||S.tool;if(!['coal','hospital','nuclear','solar','transit','wastewater','heavy_industry'].includes(type))return;S.manualRotation=((S.manualRotation??S.previewRot??0)+1)%4;S.previewRot=S.manualRotation;showNotice(`Orientación ${S.manualRotation*90}° · R para girar`);}
 function nameNewCity(){const name=prompt('Nombre de tu nueva ciudad (gratis):','Mi ciudad');S.cityName=String(name||'Mi ciudad').trim().slice(0,32)||'Mi ciudad';}
 function renameCity(name){const clean=String(name||'').trim();if(!clean||clean.length>32){showNotice('Usa entre 1 y 32 caracteres.');return false;}if(clean===S.cityName)return true;if(!canAfford(10000)){showNotice('Cambiar el nombre cuesta 10.000 €.');return false;}changeMoney(-10000);S.cityName=clean;renderUI();return true;}
 
@@ -1273,8 +1353,9 @@ function build(i,type){
   const info=getFootprintCellsFromAnchor(i,type,rot);
   if(type!=="road" && !adjacentRoadForCells(info.cells)){showNotice("Necesita una carretera adyacente");return}
 
+  if(!goodsCanPlace(type,1,info.cells)){showNotice('Necesita mercancías libres de una fábrica conectada a esta red de carreteras.');return;}
   changeMoney(-price);
-  const b={type,level:1,occ:type==="residential"?0:0,fire:0,rot,anchor:i,w:info.fp.w,h:info.fp.h,cells:info.cells.slice(),palette:['residential','commercial','office'].includes(type)?Math.floor(Math.random()*3):0};
+  const b={type,level:1,occ:type==="residential"?0:0,fire:0,rot,anchor:i,w:info.fp.w,h:info.fp.h,cells:info.cells.slice(),palette:['residential','commercial','office','heavy_industry','light_industry'].includes(type)?Math.floor(Math.random()*3):0};
   b.born=performance.now();
   if(info.fp.w*info.fp.h===2&&!S.rotationHintSeen){S.rotationHintSeen=true;showNotice('Edificio 1×2 · pulsa R o el botón Girar antes de colocarlo para cambiar su orientación.');}
   for(const c of info.cells)S.grid[c]=b;
@@ -1307,6 +1388,7 @@ function upgradeSelected(){
   if(!canAfford(cost)){showNotice("Fondos insuficientes");return}
   const expansion=upgradeSpace(b,next);
   if(!expansion){const fp=footprint(b.type,b.rot,next);showNotice(`La mejora necesita ${fp.w}×${fp.h} parcelas urbanizadas, sin obstáculos, alrededor del edificio.`);return;}
+  if(!goodsCanPlace(b.type,next,expansion.cells,b.level)){showNotice('Esta mejora necesita más mercancías libres en su red de carreteras.');return;}
   const oldOcc=b.occ||0;clearBuilding(b);Object.assign(b,{anchor:expansion.anchor,w:expansion.fp.w,h:expansion.fp.h,cells:expansion.cells,legacyFootprint:false});b.cells.forEach(c=>S.grid[c]=b);
   changeMoney(-cost);b.level=next;b.born=performance.now();b.shadowParts=null;
   if(isHome(b))b.occ=oldOcc;
@@ -1331,6 +1413,8 @@ function buildingStats(b){
   if(d.serviceKind||d.waterCap||d.pollutionReduce||d.research)a.push(["Eficacia actual",`${Math.round((b.serviceEfficiency||0)*100)}%`]);
   if(TECHNOLOGIES[b.type])a.push(['Consumo de investigación',researchDemand(b.type,b.level).toFixed(2)],['Eficacia por investigación',`${Math.round(researchFactor(b)*100)}%`]);
   if(d.research)a.push(["Investigación",`${((d.research[l]||0)*(b.serviceEfficiency||0)*clamp((b.workers||0)/(d.jobs[l]||1),0,1)).toFixed(2)} de capacidad`]);
+  if(isIndustry(b))a.push(['Mercancías producidas',`${(b.goodsOutput||0).toFixed(1)} / ${d.goods[l]}`],['Actividad industrial',`${Math.round((b.industryEfficiency||0)*100)}%`]);
+  if(goodsDemand(b.type,l))a.push(['Mercancías recibidas',`${(b.goodsReceived||0).toFixed(1)} / ${goodsDemand(b.type,l).toFixed(1)}`],['Rendimiento por mercancías',`${Math.round(goodsFactor(b)*100)}%`]);
   if(d.jobs)a.push(["Trabajadores",`${Math.round(b.workers||0)} / ${d.jobs[l]}`]);
   if(d.income){
  a.push(['Beneficio neto',hourly(operational(b.anchor)?(b.currentIncome||0)-(d.upkeep?.[l]||0):0)],['Ingreso potencial',hourly(d.income[l])],['Ingreso bruto actual',hourly(b.currentIncome||0)]);
@@ -1342,7 +1426,7 @@ function buildingStats(b){
 function nextComparison(b){
   const d=buildingDef(b),l=b.level,n=l+1;if(n>d.max)return"Nivel máximo del edificio.";ensureLevel(b.type,n);const p=[];
   if(b.type==="road"){p.push(`Carriles ${ROAD_LANES[l]} → ${ROAD_LANES[n]}`,`Capacidad ${ROAD_CAP[l]} → ${ROAD_CAP[n]}`)}
-  if(d.cap)p.push(`Capacidad ${d.cap[l]} → ${d.cap[n]}`);if(d.jobs)p.push(`Empleos ${d.jobs[l]} → ${d.jobs[n]}`);if(d.income)p.push(`Ingreso máximo ${euro(d.income[l])} → ${euro(d.income[n])}/hora`);if(d.powerCap)p.push(`Potencia ${power(d.powerCap[l])} → ${power(d.powerCap[n])}`);if(d.waterCap)p.push(`Agua ${d.waterCap[l]} → ${d.waterCap[n]}`);if(d.coverage)p.push(`Cobertura ${d.coverage[l]} → ${d.coverage[n]} hab.`);if(d.pollution)p.push(`Contaminación ${d.pollution[l]} → ${d.pollution[n]}`);if(d.pollutionReduce)p.push(`Reducción ${d.pollutionReduce[l]} → ${d.pollutionReduce[n]}`);p.push(`Mantenimiento ${hourly(d.upkeep?.[l]||0)} → ${hourly(d.upkeep?.[n]||0)}`);const fp=buildingFootprint(b,n);if(fp.w!==(b.w||1)||fp.h!==(b.h||1))p.push(`Superficie necesaria: ${fp.w}×${fp.h} · libera y urbaniza las parcelas contiguas`);return p.join("<br>");
+  if(d.goods)p.push(`${isIndustry(b)?'Producción':'Demanda'} de mercancías ${d.goods[l]} → ${d.goods[n]}`);if(goodsRequirement(b.type,n,l))p.push(`Necesita ${goodsRequirement(b.type,n,l).toFixed(1)} mercancías adicionales libres en su red`);if(d.cap)p.push(`Capacidad ${d.cap[l]} → ${d.cap[n]}`);if(d.jobs)p.push(`Empleos ${d.jobs[l]} → ${d.jobs[n]}`);if(d.income)p.push(`Ingreso máximo ${euro(d.income[l])} → ${euro(d.income[n])}/hora`);if(d.powerCap)p.push(`Potencia ${power(d.powerCap[l])} → ${power(d.powerCap[n])}`);if(d.waterCap)p.push(`Agua ${d.waterCap[l]} → ${d.waterCap[n]}`);if(d.coverage)p.push(`Cobertura ${d.coverage[l]} → ${d.coverage[n]} hab.`);if(d.pollution)p.push(`Contaminación ${d.pollution[l]} → ${d.pollution[n]}`);if(d.pollutionReduce)p.push(`Reducción ${d.pollutionReduce[l]} → ${d.pollutionReduce[n]}`);p.push(`Mantenimiento ${hourly(d.upkeep?.[l]||0)} → ${hourly(d.upkeep?.[n]||0)}`);const fp=buildingFootprint(b,n);if(fp.w!==(b.w||1)||fp.h!==(b.h||1))p.push(`Superficie necesaria: ${fp.w}×${fp.h} · libera y urbaniza las parcelas contiguas`);return p.join("<br>");
 }
 function showLandPopup(i,cells=[i]){
  if(S.tool!=='land')return;$('#mergeBtn').hidden=true;
@@ -1380,11 +1464,12 @@ function incomeDetails(b){
  const q=b.incomeBreakdown;if(!q)return '';
  const pct=v=>(v*100).toLocaleString('es-ES',{maximumFractionDigits:1})+'%';
  const details=q.reasons.length?q.reasons.map(r=>`${r.label}: −${pct(r.penalty)}`).join(' · '):'Sin penalizaciones urbanas';
- return `<div class="incomeDetails"><b>Cómo se calcula el ingreso</b><br>${hourly(q.base)} × ${pct(q.workerRatio)} de plantilla = ${hourly(q.staffBase)}<br>Suministros: ${pct(q.supply)} · Entorno: ${pct(q.environment)}<br>${details}${q.reasons.length?' (reducción conjunta máxima: 35%)':''}<br><b>Bruto: ${hourly(b.currentIncome)} · mantenimiento: ${hourly(DEF[b.type].upkeep[b.level])}</b></div>`;
+ return `<div class="incomeDetails"><b>Cómo se calcula el ingreso</b><br>${hourly(q.base)} × ${pct(q.workerRatio)} de plantilla = ${hourly(q.staffBase)}<br>Suministros: ${pct(q.supply)} · Mercancías: ${pct(q.goods??1)} · Entorno: ${pct(q.environment)}<br>${details}${q.reasons.length?' (reducción conjunta máxima: 35%)':''}<br><b>Bruto: ${hourly(b.currentIncome)} · mantenimiento: ${hourly(DEF[b.type].upkeep[b.level])}</b></div>`;
 }
 function openPopup(i){
  const house=S.grid[i],group=fusionGroup(i),merge=$('#mergeBtn');merge.hidden=house?.type!=='residential';merge.disabled=!group;merge.textContent=group?'Unir 4 viviendas · 2×2':(!S.debug&&S.cityLevel<4)?'Unión disponible desde ciudad N4':'Unir: requiere 4 viviendas iguales N4+ en 2×2';merge.title='Selecciona una de cuatro viviendas del mismo nivel (N4 o superior), con ciudad N4 o superior, que formen un cuadrado 2×2, sin incendios.';
  if(house?.type==='park'&&!house.parkLevels){const parks=parkFusionGroup(i);merge.hidden=false;merge.disabled=!parks;merge.textContent=parks?'Unir parques · Parque Central':'Unir: requiere dos parques de 3×3 contiguos';merge.title='Dos parques de 3×3 alineados por un lado completo. Conserva la suma de sus prestaciones y mantenimiento.';}
+  if(house?.type==='heavy_industry'){const industry=industrialFusionGroup(i);merge.hidden=false;merge.disabled=!industry;merge.textContent=industry?'Fusionar 4 fábricas · Complejo 2×2':'Unir: 4 fábricas iguales contiguas · ciudad N3';merge.title='Cuatro fábricas del mismo nivel, sin incendios, con espacio para el complejo de 2×2.';}
   const b=S.grid[i];if(!b){closePopup();return}S.landSelection=[];S.selectedLand=null;S.selected=i;const d=buildingDef(b);$("#moveBtn").style.display=b.type==="road"?"none":"";$("#demolishBtn").style.display="";$("#popupName").textContent=`${d.name} · Nivel ${b.level}`;$("#popupMeta").textContent=(operational(i)?"Operativo":"Sin conexión por carretera: cuenta como inactivo")+(b.fire?" · INCENDIO ACTIVO":"");$("#popupStats").innerHTML=buildingStats(b).map(([k,v])=>`<div class="pstat ${['Ocupación','Trabajadores','Beneficio neto','Satisfacción local','Investigación','Capacidad eléctrica','Agua efectiva / nominal'].includes(k)?'primary-stat':'secondary-stat'} ${b.type==='commercial'&&['Trabajadores','Beneficio neto'].includes(k)?'commercial-pair':''}"><span>${k}</span><b>${v}</b></div>`).join("");const next=b.level+1,cost=buildingUpgradeCost(b);if(next<=d.max){ensureLevel(b.type,next);const lock=next>maxAllowedLevel(b.type)?`Bloqueado por progresión urbana. Máximo actual: nivel ${maxAllowedLevel(b.type)}.`:"";$("#upgradeBox").innerHTML=`<div class="upgradeTitle">Mejora a nivel ${next}</div><div class="upgradeCompare">${nextComparison(b)}${lock?`<br><b style="color:#e3bd6a">${lock}</b>`:""}</div>`;$("#upgradeBtn").textContent=S.debug?`Mejorar a N${next} · GRATIS`:`Mejorar · ${euro(cost)}`;$("#upgradeBtn").disabled=next>maxAllowedLevel(b.type)||!canAfford(cost);}else{$("#upgradeBox").innerHTML=`<div class="upgradeTitle">Nivel máximo alcanzado</div>`;$("#upgradeBtn").textContent="Nivel máximo";$("#upgradeBtn").disabled=true;}popup.classList.add("visible");updatePopupPosition();
 }
 function closePopup(){S.selected=null;S.selectedLand=null;S.landSelection=[];popup.classList.remove("visible")}
@@ -1408,6 +1493,7 @@ function keyEffect(type){
   if(d.serviceKind==="security")return`${d.coverage[1]} hab. · seguridad`;
   if(d.serviceKind==="fire")return`${d.coverage[1]} hab. · incendios`;
   if(d.trafficRelief)return`-${Math.round(d.trafficRelief[1]*100)}% viajes`;
+  if(isIndustry({type}))return `${d.goods[1]} mercancías · ${d.jobs[1]} empleos`;
   if(type==="park")return`+${d.happiness[1]} satisfacción`;
   if(d.pollutionReduce)return`-${d.pollutionReduce[1]} contaminación`;
   return d.effect;
@@ -1442,6 +1528,8 @@ function thumbSVG(type,level=1){
 function buildingSpecs(type){
   const d=DEF[type],fp=footprint(type,0),parts=[`<strong class="buildFunction">Función: ${keyEffect(type)}</strong>`,`<b>Tamaño:</b> ${fp.w}×${fp.h}`,`<b>Máx. actual:</b> ${maximumText(type)}`];
   if(buildingLocked(type))parts.push(`<b>Desbloqueo:</b> ${buildingLockText(type)}`);
+  if(d.goods)parts.push(`<b>Mercancías N1:</b> ${isIndustry({type})?'produce':'demanda'} ${d.goods[1]}`);
+  if(goodsRequirement(type))parts.push(`<b>Construcción:</b> ${goodsRequirement(type)} mercancías libres en su red`);
   if(d.jobs)parts.push(`<b>Empleo N1:</b> ${d.jobs[1]||0}`);if(d.powerCap)parts.push(`<b>Potencia N1:</b> +${power(d.powerCap[1]||0)}`);if(d.waterCap)parts.push(`<b>Agua N1:</b> +${d.waterCap[1]||0}`);if(d.income)parts.push(`<b>Ingreso base N1:</b> ${euro(d.income[1]||0)}/h`);
   if(TECHNOLOGIES[type])parts.push(`<b>Investigación N1:</b> ${researchDemand(type).toFixed(2)} de capacidad continua`);
   if(d.coverage)parts.push(`<b>Cobertura N1:</b> ${d.coverage[1]} hab.`);
@@ -1452,14 +1540,14 @@ function renderPalette(){
   ORDER.forEach(type=>{
     const d=DEF[type],locked=buildingLocked(type),active=S.tool===type;
     const b=document.createElement("button");b.type="button";b.className="build"+(active?" active":"")+(locked?" locked":"");b.dataset.type=type;
-    const cat=type==="residential"?"Vivienda":type==="commercial"||type==="office"?"Economía":type==="road"||type==="transit"?"Movilidad":type==="coal"||type==="solar"||type==="nuclear"||type==="water"||type==="wastewater"?"Infraestructura":type==="park"||type==="recycling"?"Entorno":"Servicios";
+    const cat=isIndustry({type})?'Industria':type==="residential"?"Vivienda":type==="commercial"||type==="office"?"Economía":type==="road"||type==="transit"?"Movilidad":type==="coal"||type==="solar"||type==="nuclear"||type==="water"||type==="wastewater"?"Infraestructura":type==="park"||type==="recycling"?"Entorno":"Servicios";
     b.innerHTML=`<div class="buildTop"><div class="buildThumb">${thumbSVG(type)}</div><div><div class="buildCat">${cat}</div><div class="buildName">${d.name}</div><div class="buildCost">${S.debug?"GRATIS":euro(buildPrice(type))}</div></div></div><div class="buildDetails">${buildingSpecs(type)}</div>${locked?`<span class="lock">${buildingLockText(type)}</span>`:""}`;
     p.appendChild(b);
   });
 }
 $("#palette").addEventListener("click",e=>{
   const b=e.target.closest("[data-type]");if(!b)return;const type=b.dataset.type,d=DEF[type];
-  if(buildingLocked(type)){showNotice(buildingLockText(type));if(TECHNOLOGIES[type]){if(analysisDrawer!=='data')toggleAnalysis('data');$('#researchUtility').scrollIntoView({block:'nearest',behavior:'smooth'});}return}
+  if(buildingLocked(type)){showNotice(buildingLockText(type));if(TECHNOLOGIES[type]){if(analysisDrawer!=='data')toggleAnalysis('data');$(goodsAvailableAnywhere()+1e-8<goodsRequirement(type)?'#goodsUtility':'#researchUtility').scrollIntoView({block:'nearest',behavior:'smooth'});}return}
   if(S.tool===type){cancelAction();return}
   S.manualRotation=null;S.moving=null;S.tool=type;S.previewRot=randomRotation(type);closePopup();renderPalette();updateMapStatus();
 });
@@ -1639,7 +1727,7 @@ function updateCamera(){
 }
 const METAL_COLORS=new Set(['#758d91','#4a788e','#bedce0','#afc8ca','#b4c6cb','#c5c6d3','#d4c9b6','#5f7276','#d9d5bd']);
 const GLASS_COLORS=new Set(['#85bed1','#293e4b','#67dbed','#50b9d2','#254e83','#315e82','#487fa2','#6299ac','#76bbc8']);
-for(const palette of [...RESIDENTIAL_PALETTES,...COMMERCIAL_PALETTES,...OFFICE_PALETTES])GLASS_COLORS.add(palette.window);
+for(const palette of [...RESIDENTIAL_PALETTES,...COMMERCIAL_PALETTES,...OFFICE_PALETTES,...INDUSTRIAL_PALETTES])GLASS_COLORS.add(palette.window);
 for(const col of ['#809298','#758181','#53676b','#4e6b70','#46656a','#a9d3d8','#c6e7e5','#73acbd','#91a9a2'])METAL_COLORS.add(col);
 const GRASS_COLORS=new Set(['#7ca66c','#779f67','#426d50','#3e674c','#75a96c','#559d67','#92ac79']);
 const WATER_COLORS=new Set(['#3e8998','#326d7a','#6299ac','#76bbc8','#63aebd']);
@@ -1658,6 +1746,13 @@ function latheMesh(rings,cap=true){
  return {pos,norm,indices};
 }
 const extraMeshes={octagon:latheMesh([[-.5,.5],[.5,.5]]),cooling:latheMesh([[-.5,.5],[-.22,.39],[.12,.31],[.40,.34],[.5,.37]],false)};
+// Sawtooth prism: steep glazed north face and one sloping roof plane.
+function sawtoothMesh(){
+ const vertices=cubePos.map((v,i)=>i%3===1&&v>0?(cubePos[i+1]>0?.5:-.5):v),pos=[],norm=[],indices=[];
+ for(let i=0;i<cubeIdx.length;i+=3){const tri=cubeIdx.slice(i,i+3).map(j=>vertices.slice(j*3,j*3+3)),a=tri[1].map((v,k)=>v-tri[0][k]),b=tri[2].map((v,k)=>v-tri[0][k]),n=cross(a,b);if(Math.hypot(...n)<1e-8)continue;const normal=norm3(n);for(const point of tri){indices.push(indices.length);pos.push(...point);norm.push(...normal);}}
+ return {pos,norm,indices};
+}
+extraMeshes.sawtooth=sawtoothMesh();
 function geometryFor(name){return extraMeshes[name]||{pos:name==='roof'?roofPos:cubePos,norm:name==='roof'?roofNorm:cubeNorm,indices:cubeIdx};}
 const meshBuffers={};
 function bindExtraMesh(name){const mesh=extraMeshes[name];if(!mesh)return;let buffers=meshBuffers[name];if(!buffers){buffers={pos:makeBuffer(mesh.pos),norm:makeBuffer(mesh.norm),indices:gl.createBuffer()};gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers.indices);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(mesh.indices),gl.STATIC_DRAW);meshBuffers[name]=buffers;}gl.bindBuffer(gl.ARRAY_BUFFER,buffers.pos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,buffers.norm);gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers.indices);}
@@ -1692,6 +1787,7 @@ function drawBox(x,y,z,sx,sy,sz,col,ry=0,em=0,mesh="cube"){
   }
 }
 function buildingHeight(type,l){
+ if(isIndustry({type}))return .88+l*.15;
  l=Math.min(l,8);
  if(type==='residential_block')return 1.5+(l-4)*.5;
  if(type==='residential')return [.0,.67,1.0,1.42,1.94,2.50,3.12,3.84,4.62][l];
@@ -1743,6 +1839,7 @@ function windowLight(b,x,y,z){
 // A single model generator serves the map, construction ghost and thumbnails.
 function centralParkLamps(){return [-2.3,-.65,.65,2.3].flatMap(x=>[-1,1].map(z=>[x,z]));}
 function parkLampOffsets(level){return level>=5?[[-.23,.64],[.23,.64],[-.23,-.64],[.23,-.64]]:[[-.23,.64],[.23,.64]];}
+function industryLayout(b){const wide=b.type==='industrial_complex',light=b.type==='light_industry';return {w:wide?1.84:.86,d:light?.86:1.84,body:.30+b.level*.095,stack:.83+b.level*.14,light,wide};}
 function drawBuilding(b,x,z){
  const l=Math.min(b.level,8),cx=x+((b.w||1)-1)*.5,cz=z+((b.h||1)-1)*.5,pal=buildingPalette(b),type=b.type;
  activeHeatColor=buildingHeatColor(b);
@@ -1838,6 +1935,26 @@ function drawBuilding(b,x,z){
   if(l>=8){box(0,.38,0,.06,.22,.06,'#c5e6e4',.25);box(0,.51,0,.18,.045,.18,'#8ed4d2',.20);for(const dx of [-.8,.8])for(const dz of [-.8,.8])box(dx,.08,dz,.13,.045,.13,'#d9a8be');}
   if(l>=6)for(let k=0;k<(l-5)*3;k++){const angle=k*2.4,r=.66+(k%2)*.08,dx=Math.cos(angle)*r,dz=Math.sin(angle)*r,h=.27+(k%3)*.09;box(dx,h/2,dz,.035,h,.035,'#93663f');if(k%2){oct(dx,h+.10,dz,.19,.25,.19,'#359558');oct(dx,h+.25,dz,.12,.18,.12,'#59ba60');}else{box(dx,h+.09,dz,.22,.19,.23,'#6abd56');box(dx+.025,h+.20,dz,.15,.10,.15,'#91cf60');}}
   for(const [dx,dz] of parkLampOffsets(l)){box(dx,.29,dz,.025,.5,.025,'#46656a');box(dx,.56,dz,.10,.055,.10,night>.3?'#ffda9b':'#e4d5ad',night*.8);}
+ }else if(isIndustry(b)){
+  const {w,d,body,stack,light,wide}=industryLayout(b),hallW=w*.72,hallD=d*.76,rows=Math.min(5,2+l),roofH=.14;
+  box(0,.025,0,w,.05,d,'#a7b4a5');
+  box(-w*.09,body/2+.05,-d*.04,hallW,body,hallD,pal.walls[light?1:0]);
+  for(let k=0;k<rows;k++){const dz=-d*.04-hallD/2+(k+.5)*hallD/rows;
+   drawBox(cx-w*.09,body+.05+roofH/2,cz+dz,hallW+.03,roofH,hallD/rows,pal.roof,0,0,'sawtooth');
+   box(-w*.09,body+.05+roofH*.57,dz+hallD/rows/2+.004,hallW*.85,roofH*.60,.012,pal.window);
+  }
+  for(let k=0;k<Math.min(3,l);k++){const dx=-w*.09+(k-(Math.min(3,l)-1)/2)*hallW*.26;window(dx,.23,d*.34+.008,hallW*.20,.16);}
+  // Loading bay, metal service gantry and conveyor at the east edge.
+  box(-w*.09,.17,d*.35,.20,.26,.025,'#344d56');box(-w*.09,.32,d*.38,.25,.04,.12,pal.accent);
+  box(w*.37,.115,0,w*.15,.055,d*.72,'#53676b');for(const dz of [-d*.26,d*.26])box(w*.37,.065,dz,.025,.10,.04,'#758d91');
+  const count=wide?3:light?1:Math.min(2,1+Math.floor(l/3));
+  for(let k=0;k<count;k++){const dx=-w*.32+k*w*.20,dz=-d*.36;
+   box(dx,stack/2,dz,.068,stack,.068,pal.trim);box(dx,stack-.10,dz,.08,.052,.08,'#e44843',night*.9);box(dx,stack+.024,dz,.085,.025,.085,'#53676b');
+  }
+  if(l>=2){oct(w*.06,body+.18,-d*.10,w*.18,.24,w*.18,'#758d91');box(w*.06,body+.32,-d*.10,w*.20,.035,w*.20,pal.trim);}
+  if(l>=3){box(-w*.24,body+.19,d*.10,w*.24,.26,d*.23,pal.walls[1]);window(-w*.24,body+.20,d*.22,w*.17,.12);box(-w*.24,body+.34,d*.10,w*.28,.045,d*.26,pal.roof);}
+  if(l>=4){for(const dz of [-d*.16,d*.12]){box(w*.22,body*.65,dz,.035,body*.80,.035,pal.trim);box(w*.14,body*1.05,dz,.20,.035,.035,pal.trim);}}
+  if(l>=5){box(-w*.25,body+.40,d*.10,w*.27,.045,d*.27,pal.window);oct(w*.02,body+.42,-d*.10,w*.14,.30,w*.14,pal.trim);}
  }else if(type==='water'){
   const silo=l>=4,tw=.57+(l-1)*.07,th=silo?.88+(l-4)*.22:.27+(l-1)*.10,base=silo?.025:.50+l*.035;
   if(!silo)for(const dx of [-tw*.30,tw*.30])for(const dz of [-tw*.30,tw*.30])box(dx,base/2,dz,.045,base,.045,'#758d91');
@@ -2119,6 +2236,10 @@ function cityParticles(time=performance.now()*.001,buildings=uniqueBuildings()){
     addSmoke(dx*(((b.rot||0)%2?(b.h||1):(b.w||1))*.95),.98+b.level*.10+.05+age*1.2,-.24+Math.sin(age*5+b.anchor)*age*.14,age,.10+age*.38,[.43,.46,.46,Math.pow(1-age,.65)*.78],.9);
    }
   }
+  if(isIndustry(b)&&b.industryEfficiency>0&&operational(b.anchor)){
+   const {w,d,stack,light}=industryLayout(b),count=light?3:5;
+   for(let k=0;k<count;k++){const age=(industryClock*.25+k/count)%1;addSmoke(-w*.32,stack+.05+age*.85,-d*.36,age,.07+age*.22,[.58,.60,.59,(1-age)*(light?.22:.45)*b.industryEfficiency],.8);}
+  }
   if(b.type==='nuclear'&&operational(b.anchor)){for(const dx of [-.51])for(let k=0;k<8;k++){const age=(time*.23+k/8+terrainRand(b.anchor,k,16)*.07)%1;addSmoke(dx,.79+b.level*.095+age*1.25,-.09+Math.sin(k)*age*.11,age,.16+age*.40,[.88,.92,.91,Math.pow(1-age,.7)*.64],.65);}}
   if(b.fire){
    const top=Math.max(.35,buildingHeight(b.type,b.level)*.65);
@@ -2224,6 +2345,16 @@ function drawRoadTile(i,b,w){
  }
  if(crosswalk)for(let k=-2;k<=2;k++)drawBox(w.x+(horiz?k*.075:0),.052,w.z+(vert?k*.075:0),horiz?.037:width*.9,.006,vert?.037:width*.9,'#eee8d3');
 }
+let industryClock=0;
+function drawIndustryProduction(buildings){
+ activeBuildingTransform=null;activeHeatColor=null;
+ for(const b of buildings){if(!isIndustry(b)||!(b.industryEfficiency>0)||!operational(b.anchor))continue;
+  const c=buildingCenterWorld(b),a=(b.rot||0)*Math.PI/2,{w,d}=industryLayout(b),pal=buildingPalette(b),count=b.type==='industrial_complex'?5:2;
+  for(let k=0;k<count;k++){const phase=(industryClock*.24*b.industryEfficiency+k/count)%1,dx=w*.37,dz=(phase-.5)*d*.62;
+   drawBox(c.x+dx*Math.cos(a)+dz*Math.sin(a),.18,c.z-dx*Math.sin(a)+dz*Math.cos(a),w*.10,.075,.095,pal.accent,a);
+  }
+ }
+}
 function drawRiverSurface(){
  const t=performance.now()*.001;
  for(let i=0;i<S.river.length;i++)if(S.river[i]&&!S.grid[i]){
@@ -2275,16 +2406,18 @@ function syncServiceCars(buildings=uniqueBuildings()){
  });
 }
 function updateCars(dt,buildings=uniqueBuildings()){
+ industryClock+=dt*Math.max(0,runningSpeed);
  syncServiceCars(buildings);
  const target=Math.min(48,Math.floor(S.pop/22));
- cars=cars.filter(c=>c.path.every(i=>S.grid[i]?.type==='road'));
+ const freightKeys=new Set(goodsRoutes.map(r=>r.source+':'+r.target));
+ cars=cars.filter(c=>c.path.every(i=>S.grid[i]?.type==='road')&&(c.kind!=='freight'||freightKeys.has(c.source+':'+c.target)));
  if(cars.length>target)cars.length=target;
  const routes=trafficRoutes.filter(r=>r.path.length>1&&r.path.every(i=>S.grid[i]?.type==='road'));
  if(routes.length&&cars.length<target){
   const total=routes.reduce((a,r)=>a+r.amount,0);let pick=Math.random()*total,r=routes[0];
   for(const route of routes){pick-=route.amount;if(pick<=0){r=route;break;}}
   const path=Math.random()<.5?r.path.slice():r.path.slice().reverse();
-  cars.push({path,lane:Math.random()<.5?0:1,t:Math.random()*(path.length-1),color:['#e4c189','#82b8b3','#b4c8cd','#c68e83','#6b90ac'][Math.floor(Math.random()*5)]});
+  cars.push({path,kind:r.kind==='freight'?'freight':null,source:r.source,target:r.target,lane:Math.random()<.5?0:1,t:Math.random()*(path.length-1),color:['#e4c189','#82b8b3','#b4c8cd','#c68e83','#6b90ac'][Math.floor(Math.random()*5)]});
  }
  for(const c of [...cars,...serviceCars]){
   if(c.path.length<2)continue;
@@ -2299,10 +2432,11 @@ function drawCars(sun,buildings=uniqueBuildings()){
  for(const car of [...cars,...serviceCars]){
   const i=Math.min(Math.max(0,car.path.length-2),Math.floor(car.t)),t=car.path.length>1?car.t-i:0,a=coord(car.path[i]),b=coord(car.path[i+1]??car.path[i]),dx=b.x-a.x,dz=b.z-a.z;
   const w=worldFromCell(a.x+dx*t,a.z+dz*t),x=w.x-dz*laneOffset(car,S.grid[car.path[i]]?.level||1),z=w.z+dx*laneOffset(car,S.grid[car.path[i]]?.level||1),ry=Math.atan2(dx,dz||(!dx?1:0));
-  const long=car.kind==='bus'?.32:car.kind==='recycling'?.25:.15,width=car.kind?.078:.062;
+  const long=car.kind==='bus'?.32:['recycling','freight'].includes(car.kind)?.25:.15,width=car.kind?.078:.062;
   const piece=(ox,y,oz,sx,sy,sz,col,em=0)=>drawBox(x+ox*Math.cos(ry)+oz*Math.sin(ry),y,z-ox*Math.sin(ry)+oz*Math.cos(ry),sx,sy,sz,col,ry,em);
   piece(0,.092,0,width,.076,long,car.color);piece(0,.137,car.kind==='recycling'?.072:0,width*.86,.032,long*.53,'#526f7b',.05);
   if(car.kind==='bus'){for(let k=-2;k<=2;k++){piece(-width*.51,.119,k*.045,.008,.035,.028,'#688b97');piece(width*.51,.119,k*.045,.008,.035,.028,'#688b97');}piece(0,.161,0,width*.9,.018,long*.82,'#ebc969');}
+  if(car.kind==='freight')piece(0,.15,-.04,width,.10,long*.62,'#c6ae86');
   if(car.kind==='recycling')piece(0,.139,-.037,width*.98,.085,long*.60,'#5e9975');
   if(car.kind==='police'){
    const flash=Math.sin(performance.now()*.013+car.phase)>0;
@@ -2368,7 +2502,7 @@ function renderWater(sun){
 }
 function renderDynamicScenery(sun,buildings){
  captureParts=[];captureScene=false;activeBuildingTransform=null;activeHeatColor=null;
- drawRiverSurface();drawCars(sun,buildings);drawChimneyPulses(sun,buildings);
+ drawRiverSurface();drawIndustryProduction(buildings);drawCars(sun,buildings);drawChimneyPulses(sun,buildings);
  const data=vertexDataForParts(captureParts);captureParts=null;
  gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBatchBuffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);drawBatch(dynamicBatchBuffer,data.length/12,sun);
 }
