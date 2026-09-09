@@ -50,3 +50,10 @@ test('Industrial saves support rotated heavy factories, light factories and comp
  for(const [type,w,h,rot] of [['heavy_industry',1,2,0],['heavy_industry',2,1,1],['light_industry',1,1,0],['industrial_complex',2,2,0]]){city.buildings=[{...building,type,w,h,rot}];const saved=validateCity(city);assert.equal(saved.buildings[0].type,type);assert.equal(saved.buildings[0].w,w);assert.equal(saved.buildings[0].palette,2);}
  for(const b of [{type:'heavy_industry',w:1,h:1},{type:'light_industry',w:2,h:2},{type:'industrial_complex',w:1,h:2},{type:'heavy_industry',w:1,h:2,level:6}]){city.buildings=[{...building,...b}];assert.throws(()=>validateCity(city));}
 });
+
+
+test('Monuments and tutorial/news history survive validation; malformed history and footprints are rejected',()=>{
+ const city={...state,format:4,width:36,height:36,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),tutorialStep:2,adviceSeen:['heavy_industry'],newsSeen:['Noticia única'],buildings:[{type:'monument',level:1,w:1,h:1,anchor:200,rot:0,palette:2,occ:0,fire:0}]};
+ const saved=validateCity(city);assert.equal(saved.buildings[0].type,'monument');assert.equal(saved.tutorialStep,2);assert.deepEqual(saved.newsSeen,city.newsSeen);assert.deepEqual(saved.adviceSeen,city.adviceSeen);
+ for(const changes of [{tutorialStep:7},{newsSeen:['x'.repeat(301)]},{adviceSeen:['invalid']},{buildings:[{...city.buildings[0],w:2}]}])assert.throws(()=>validateCity({...city,...changes}));
+});

@@ -1,6 +1,6 @@
 const ORIGIN='https://juegos-dglopez.dglopez.chatgpt.site';
 const COOKIE='cv_session', TTL=30*86400, MAX_BODY=360000;
-const CAPS={road:8,residential:8,commercial:6,park:8,water:5,coal:5,school:5,clinic:4,library:4,police:5,recycling:5,wastewater:5,fire:5,solar:5,office:6,transit:4,university:4,hospital:4,nuclear:3,research:4,residential_block:8,heavy_industry:5,light_industry:5,industrial_complex:5};
+const CAPS={road:8,residential:8,commercial:6,park:8,water:5,coal:5,school:5,clinic:4,library:4,police:5,recycling:5,wastewater:5,fire:5,solar:5,office:6,transit:4,university:4,hospital:4,nuclear:3,research:4,residential_block:8,heavy_industry:5,light_industry:5,industrial_complex:5,monument:1};
 const encoder=new TextEncoder();
 const hex=a=>Array.from(new Uint8Array(a),x=>x.toString(16).padStart(2,'0')).join('');
 const random=()=>hex(crypto.getRandomValues(new Uint8Array(32)));
@@ -29,7 +29,9 @@ export function validateCity(s){
  const unlockAt={};for(const t of Object.keys(CAPS))if(s.unlockAt&&number(s.unlockAt[t],0,1e9))unlockAt[t]=s.unlockAt[t];
  if(s.gameOver!==undefined&&typeof s.gameOver!=='boolean')fail(400,'Estado de partida no válido.');
  const cityName=s.cityName??'Mi ciudad';if(typeof cityName!=='string'||!cityName.trim()||cityName.length>32)fail(400,'Nombre de ciudad no válido.');
- return {cityName:cityName.trim(),dayNight:s.dayNight!==false,tutorialDone:s.tutorialDone??buildings.length>0,format:s.format>=3?s.format:2,width,height,gameOver:!!s.gameOver,mapSeed:s.mapSeed,money:s.money,day:s.day,tax:s.tax,cityLevel:s.cityLevel,diseaseDays:s.diseaseDays,crimeDays:s.crimeDays,alerts:s.alerts,debug:s.debug,landUnlocked:s.landUnlocked,river:s.river,buildings,unlockAt,researchPoints,technologies,loan};
+ const tutorialStep=s.tutorialStep??0,adviceSeen=s.adviceSeen??[],newsSeen=s.newsSeen??[];
+ if(!number(tutorialStep,0,6,true)||!Array.isArray(adviceSeen)||adviceSeen.length>4||adviceSeen.some(t=>!['heavy_industry','research','light_industry','monument'].includes(t))||!Array.isArray(newsSeen)||newsSeen.length>1024||newsSeen.some(t=>typeof t!=='string'||t.length>300))fail(400,'Historial de consejos o noticias no válido.');
+ return {tutorialStep,adviceSeen:[...new Set(adviceSeen)],newsSeen:[...new Set(newsSeen)],cityName:cityName.trim(),dayNight:s.dayNight!==false,tutorialDone:s.tutorialDone??buildings.length>0,format:s.format>=3?s.format:2,width,height,gameOver:!!s.gameOver,mapSeed:s.mapSeed,money:s.money,day:s.day,tax:s.tax,cityLevel:s.cityLevel,diseaseDays:s.diseaseDays,crimeDays:s.crimeDays,alerts:s.alerts,debug:s.debug,landUnlocked:s.landUnlocked,river:s.river,buildings,unlockAt,researchPoints,technologies,loan};
 }
 async function limit(db,key,max,seconds,now){const bucket=Math.floor(now/seconds),id=await digest(key+':'+bucket);const r=await db.prepare('INSERT INTO city_rate_limits (key,count,expires_at) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1 RETURNING count').bind(id,now+seconds).first();if(r.count>max)fail(429,'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.');}
 async function authenticate(db,request,now){const token=(request.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);if(!token||!/^[a-f0-9]{64}$/.test(token))return null;return db.prepare('SELECT a.id,a.username,s.token_hash FROM city_sessions s JOIN city_accounts a ON a.id=s.account_id WHERE s.token_hash=? AND s.expires_at>?').bind(await digest(token),now).first();}
