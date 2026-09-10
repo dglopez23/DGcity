@@ -242,6 +242,7 @@ html,body{height:100%;overflow:hidden}.app{position:relative;padding:0;margin:0;
 @media(max-width:650px){#cityPlayerName{max-width:70px}.app>.urban-log{width:260px;right:8px}.app>.urban-log .event{font-size:14px}}
 
 @media(max-width:800px){.hud{padding-right:8px!important;top:calc(var(--header-height,70px) + 54px)!important}}
+.utilityLine{display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:9px;align-items:center}.utilityLine[hidden]{display:none}.utilityLine>.utilityHead,.utilityLine>.sub,.utilityLine>.researchChoices{grid-column:2}.utilityLine>.utilityHead{justify-content:flex-end}.utilityLine>.utilityHead>span{display:none}.utilityLine>.bar{grid-column:2;margin-top:0}.utilityIcon{grid-column:1;grid-row:2;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.utilityIcon.power{color:#f4cc45}.utilityIcon.water{color:#66bdeb}.utilityIcon.research{color:#bda8ef}.utilityIcon.goods{color:#e4b277}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Ciudad Viva", "url": "https://juegos-dglopez.dglopez.chatgpt.site/ciudad-viva/", "description": "Construye y gestiona tu ciudad en 3D gratis: viviendas, carreteras, energía, agua y servicios. Guarda tu partida y continúa con tu cuenta desde otro dispositivo.", "inLanguage": "es", "genre": ["Simulación", "Estrategia", "Construcción de ciudades"], "gamePlatform": "Navegador web con WebGL", "playMode": "SinglePlayer", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Diego Gálvez López"}}</script>
 </head>
@@ -366,22 +367,22 @@ html,body{height:100%;overflow:hidden}.app{position:relative;padding:0;margin:0;
         <div class="utilities">
           <div class="utilityLine">
             <div class="utilityHead"><span>Electricidad</span><b id="powerText">0 / 0</b></div>
-            <div class="bar"><i id="powerBar"></i></div>
+            <svg class="utilityIcon power" viewBox="0 0 24 24" role="img" aria-label="Electricidad"><path d="m14 2-10 12h7l-1 8 10-12h-7Z"/></svg><div class="bar"><i id="powerBar"></i></div>
             <div class="sub" id="powerStatus">Sin demanda</div>
           </div>
           <div class="utilityLine">
             <div class="utilityHead"><span>Agua</span><b id="waterText">0 / 0</b></div>
-            <div class="bar"><i id="waterBar"></i></div>
+            <svg class="utilityIcon water" viewBox="0 0 24 24" role="img" aria-label="Agua"><path d="M12 2S5 10 5 15a7 7 0 0 0 14 0c0-5-7-13-7-13ZM8 15q0 4 4 4"/></svg><div class="bar"><i id="waterBar"></i></div>
             <div class="sub" id="waterStatus">Sin demanda</div>
           </div>
           <div class="utilityLine" id="goodsUtility" hidden>
             <div class="utilityHead"><span>Mercancías</span><b id="goodsText">0 / 0</b></div>
-            <div class="bar"><i id="goodsBar"></i></div>
+            <svg class="utilityIcon goods" viewBox="0 0 24 24" role="img" aria-label="Mercancías"><path d="m12 2 9 5v10l-9 5-9-5V7Zm-9 5 9 5 9-5M12 12v10M7.5 4.5l9 5V14"/></svg><div class="bar"><i id="goodsBar"></i></div>
             <div class="sub" id="goodsStatus">Producción / demanda · sin almacenes</div>
           </div>
           <div class="utilityLine" id="researchUtility" hidden>
             <div class="utilityHead"><span>Investigación</span><b id="researchText">0 / 0</b></div>
-            <div class="bar"><i id="researchBar"></i></div>
+            <svg class="utilityIcon research" viewBox="0 0 24 24" role="img" aria-label="Investigación"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1"/></svg><div class="bar"><i id="researchBar"></i></div>
             <div class="sub" id="researchStatus">Sin demanda actual</div>
             <div class="researchChoices" id="researchChoices"></div>
           </div>
@@ -453,7 +454,7 @@ const DEF={
 
 // Capacidades moderadas; densificar cuesta más por unidad que ampliar.
 for(const [type,d] of Object.entries(DEF)){
- d.max={road:8,residential:8,commercial:6,park:8,water:5,coal:5,school:5,clinic:4,library:4,police:5,recycling:5,wastewater:5,fire:5,solar:5,office:6,transit:4,university:4,hospital:4,nuclear:3,research:4}[type];
+ d.max={road:8,residential:8,commercial:6,park:8,water:5,coal:5,school:5,clinic:4,library:4,police:5,recycling:5,wastewater:5,fire:5,solar:6,office:6,transit:4,university:4,hospital:4,nuclear:3,research:4}[type];
  const tuning={residential:{price:700},commercial:{price:1500},water:{price:1800,upkeep:3},coal:{price:6500,jobs:48,upkeep:8,pollution:12},school:{price:4500,coverage:400},clinic:{price:6000,coverage:600},police:{coverage:1000},fire:{coverage:1200},wastewater:{price:14000,waterCap:180,pollutionReduce:8,upkeep:14},solar:{price:9000,powerCap:44.8},office:{price:18000},university:{price:32000,coverage:4200},hospital:{price:38000,coverage:7500},research:{price:12000},nuclear:{price:75000}};
  for(const [k,v] of Object.entries(tuning[type]||{})){if(Array.isArray(d[k]))d[k][1]=v;else d[k]=v;}
  if(type==='office'){d.price=18000;d.jobs[1]=85;d.income[1]=145;d.upkeep[1]=16;}
@@ -767,7 +768,7 @@ function researchDemand(type,level=1){return (TECHNOLOGIES[type]?.points||0)*Mat
 function researchFactor(b){return TECHNOLOGIES[b.type]?(b.researchEfficiency??1):1;}
 function buildPrice(type){return Math.round(DEF[type].price);}
 function buildingLocked(type){return !S.debug&&(goodsAvailableAnywhere()+1e-8<goodsRequirement(type)||S.cityLevel<DEF[type].unlock||(TECHNOLOGIES[type]&&(S.researchCap||0)-(S.researchUse||0)+1e-8<researchDemand(type)));}
-function buildingLockText(type){return S.cityLevel<DEF[type].unlock?`Ciudad N${DEF[type].unlock}`:goodsAvailableAnywhere()+1e-8<goodsRequirement(type)?`Requiere ${goodsRequirement(type).toFixed(1)} mercancías libres en una red conectada`:`Requiere ${researchDemand(type).toFixed(2)} de investigación libre`;}
+function buildingLockText(type){return S.cityLevel<DEF[type].unlock?`Ciudad N${DEF[type].unlock}`:goodsAvailableAnywhere()+1e-8<goodsRequirement(type)?`Requiere ${goodsRequirement(type).toFixed(1)} mercancías libres en una red conectada`:`${TECHNOLOGIES[type]?.label||'Investigación'}: requiere ${researchDemand(type).toFixed(2)} de investigación libre`;}
 function unlockTechnology(){return false;}
 function currentResearchTarget(){return null;}
 // Match the employment allocation used by calc; research is a capacity, never a stock.
@@ -842,6 +843,7 @@ function maxAllowedLevel(type){
  if(type==='industrial_complex')return maxAllowedLevel('heavy_industry');
  if(type==='park')return Math.min(d.max,S.cityLevel);
  if(type==='water')return Math.min(d.max,S.cityLevel+1);
+ if(type==='solar')return Math.min(d.max,3+S.cityLevel-d.unlock);
  const start={light_industry:2,solar:2,office:3,research:2,wastewater:2,university:2,hospital:2}[type]||1;
  if(d.unlock===8)return d.max;
  return Math.min(d.max,start+Math.ceil((S.cityLevel-d.unlock)*(d.max-start)/(8-d.unlock)));
@@ -1546,7 +1548,7 @@ function placeMoved(anchor){
 }
 $('#moveBtn').addEventListener('click',moveSelected);
 $('#cancelAction').addEventListener('click',cancelAction);
-$('#landBtn').addEventListener('click',()=>{cancelAction();S.tool='land';renderAll();});
+$('#landBtn').addEventListener('click',()=>{const wasLand=S.tool==='land';cancelAction();if(!wasLand)S.tool='land';renderAll();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cancelAction();});
 function incomeDetails(b){
  const q=b.incomeBreakdown;if(!q)return '';
@@ -1560,7 +1562,7 @@ function openPopup(i){
   if(house?.type==='heavy_industry'){const industry=industrialFusionGroup(i);merge.hidden=false;merge.disabled=!industry;merge.textContent=industry?'Fusionar 2 fábricas · Complejo 2×2':'Unir: 2 fábricas iguales en 2×2 · ciudad N3';merge.title='Dos fábricas del mismo nivel, sin incendios, que formen un cuadrado de 2×2.';}
   const b=S.grid[i];if(!b){closePopup();return}S.landSelection=[];S.selectedLand=null;S.selected=i;const d=buildingDef(b);$("#moveBtn").style.display=b.type==="road"?"none":"";$("#demolishBtn").style.display="";$("#popupName").textContent=`${d.name} · Nivel ${b.level}`;$("#popupMeta").textContent=(operational(i)?"Operativo":"Sin conexión por carretera: cuenta como inactivo")+(b.fire?" · INCENDIO ACTIVO":"");$("#popupStats").innerHTML=buildingStats(b).map(([k,v])=>`<div class="pstat ${['Ocupación','Trabajadores','Beneficio neto','Satisfacción local','Investigación','Capacidad eléctrica','Agua efectiva / nominal'].includes(k)?'primary-stat':'secondary-stat'} ${b.type==='commercial'&&['Trabajadores','Beneficio neto'].includes(k)?'commercial-pair':''}"><span>${k}</span><b>${v}</b></div>`).join("");const next=b.level+1,cost=buildingUpgradeCost(b);if(next<=d.max){ensureLevel(b.type,next);const lock=next>maxAllowedLevel(b.type)?`Máximo actual: nivel ${maxAllowedLevel(b.type)}.`:"";$("#upgradeBox").innerHTML=`<div class="upgradeTitle">Mejora a nivel ${next}</div><div class="upgradeCompare">${nextComparison(b)}${lock?`<br><b style="color:#e3bd6a">${lock}</b>`:""}</div>`;$("#upgradeBtn").textContent=S.debug?`Mejorar a N${next} · GRATIS`:`Mejorar · ${euro(cost)}`;$("#upgradeBtn").disabled=next>maxAllowedLevel(b.type)||!canAfford(cost);}else{$("#upgradeBox").innerHTML=`<div class="upgradeTitle">Nivel máximo alcanzado</div>`;$("#upgradeBtn").textContent="Nivel máximo";$("#upgradeBtn").disabled=true;}$('#upgradeMaxBtn').hidden=false;$('#upgradeMaxBtn').disabled=$('#upgradeBtn').disabled;popup.classList.add("visible");updatePopupPosition();
 }
-function closePopup(){S.selected=null;S.selectedLand=null;S.landSelection=[];popup.classList.remove("visible")}
+function closePopup(){popupPosition=null;S.selected=null;S.selectedLand=null;S.landSelection=[];popup.classList.remove("visible")}
 $("#popupClose").addEventListener("click",closePopup);
 document.addEventListener('pointerdown',e=>{if(popup.classList.contains('visible')&&!popup.contains(e.target))closePopup();},{capture:true});
 $("#upgradeBtn").addEventListener("click",()=>{if(S.selectedLand!=null)buySelectedLand();else upgradeSelected();});
@@ -1619,14 +1621,14 @@ function buildingSpecs(type){
   if(d.goods)parts.push(`<b>Mercancías N1:</b> ${isIndustry({type})?'produce':'demanda'} ${d.goods[1]}`);
   if(goodsRequirement(type))parts.push(`<b>Construcción:</b> ${goodsRequirement(type)} mercancías libres en su red`);
   if(d.jobs)parts.push(`<b>Empleo N1:</b> ${d.jobs[1]||0}`);if(d.powerCap)parts.push(`<b>Potencia N1:</b> +${power(d.powerCap[1]||0)}`);if(d.waterCap)parts.push(`<b>Agua N1:</b> +${d.waterCap[1]||0}`);if(d.income)parts.push(`<b>Ingreso base N1:</b> ${euro(d.income[1]||0)}/h`);
-  if(TECHNOLOGIES[type])parts.push(`<b>Investigación N1:</b> ${researchDemand(type).toFixed(2)} de capacidad continua`);
+  if(TECHNOLOGIES[type])parts.push(`<b>Investigación necesaria: ${TECHNOLOGIES[type].label}.</b> ${researchDemand(type).toFixed(2)} de capacidad continua libre`);
   if(d.coverage)parts.push(`<b>Cobertura N1:</b> ${d.coverage[1]} hab.`);
   return parts.join("<br>");
 }
 function renderPalette(){
   const p=$("#palette");p.innerHTML="";
   [...ORDER].sort((a,b)=>DEF[b].unlock-DEF[a].unlock||buildPrice(b)-buildPrice(a)).forEach(type=>{
-    const d=DEF[type],locked=buildingLocked(type),active=S.tool===type;
+    const d=DEF[type],locked=!S.debug&&S.cityLevel<d.unlock,active=S.tool===type;
     const b=document.createElement("button");b.type="button";b.className="build"+(active?" active":"")+(locked?" locked":"");b.dataset.type=type;
     const cat=isIndustry({type})?'Industria':type==="residential"?"Vivienda":type==="commercial"||type==="office"?"Economía":type==="road"||type==="transit"?"Movilidad":type==="coal"||type==="solar"||type==="nuclear"||type==="water"||type==="wastewater"?"Infraestructura":type==="park"||type==="monument"||type==="recycling"?"Entorno":"Servicios";
     b.innerHTML=`<div class="buildTop"><div class="buildThumb">${thumbSVG(type)}</div><div><div class="buildCat">${cat}</div><div class="buildName">${d.name}</div><div class="buildCost">${S.debug?"GRATIS":euro(buildPrice(type))}</div></div></div><div class="buildDetails">${buildingSpecs(type)}</div>${locked?`<span class="lock">${buildingLockText(type)}</span>`:""}`;
@@ -1635,7 +1637,7 @@ function renderPalette(){
 }
 $("#palette").addEventListener("click",e=>{
   const b=e.target.closest("[data-type]");if(!b)return;const type=b.dataset.type,d=DEF[type];
-  if(buildingLocked(type)){showNotice(buildingLockText(type));if(TECHNOLOGIES[type]){if(analysisDrawer!=='data')toggleAnalysis('data');$(goodsAvailableAnywhere()+1e-8<goodsRequirement(type)?'#goodsUtility':'#researchUtility').scrollIntoView({block:'nearest',behavior:'smooth'});}return}
+  if(!S.debug&&S.cityLevel<d.unlock){showNotice(buildingLockText(type));return;}
   if(type==='road'){S.manualRotation=null;setRoadAction('build');return;}
   if(S.tool===type){cancelAction();return}
   S.manualRotation=null;S.moving=null;S.tool=type;S.previewRot=randomRotation(type);closePopup();renderPalette();updateMapStatus();
@@ -1704,7 +1706,9 @@ void main(){
   float shade=ambient+dA*.64+dB*mix(.055,.13,uDaylight)+rim+back+uEmissive;
   float fog=clamp((length(vWorld.xz)-4.0)/19.0,0.0,.10);
   vec3 c=uColor*shade*texture+mix(vec3(spec*2.2),mix(vec3(.8),uColor,.55)*spec*2.2,metal);
-  c=mix(c,c*.48+reflection*(.65+fresnel*.6),metal*gloss);
+  c=mix(c,c*.48+reflection*(.95+fresnel*.8),metal*gloss);
+  float glass=(1.0-step(.08,uSurface.x))*(1.0-step(.5,metal))*(1.0-water);
+  c=mix(c,c*.55+reflection*(.65+fresnel*.65)+vec3(spec*.7),glass*.65);
   c+=reflection*gloss*gloss*(.16+fresnel*.65);
   c*=mix(vec3(1.0),uSunColor,dA*.34);
   float luma=dot(c,vec3(0.299,0.587,0.114));
@@ -1820,7 +1824,9 @@ for(const palette of [...RESIDENTIAL_PALETTES,...COMMERCIAL_PALETTES,...OFFICE_P
 for(const col of ['#809298','#758181','#53676b','#4e6b70','#46656a','#a9d3d8','#c6e7e5','#73acbd','#91a9a2'])METAL_COLORS.add(col);
 const GRASS_COLORS=new Set(['#7ca66c','#779f67','#426d50','#3e674c','#75a96c','#559d67','#92ac79']);
 const WATER_COLORS=new Set(['#3e8998','#326d7a','#6299ac','#76bbc8','#63aebd']);
-function surfaceFor(col){return WATER_COLORS.has(col)?[.19,-1]:GRASS_COLORS.has(col)?[.95,0]:GLASS_COLORS.has(col)?[.10,.04]:METAL_COLORS.has(col)?[.16,.96]:[.78,0];}
+for(const p of INDUSTRIAL_PALETTES)METAL_COLORS.add(p.roof);
+METAL_COLORS.add('#647b7c');
+function surfaceFor(col){return WATER_COLORS.has(col)?[.19,-1]:GRASS_COLORS.has(col)?[.95,0]:GLASS_COLORS.has(col)?[.06,.04]:METAL_COLORS.has(col)?[.10,.96]:[.78,0];}
 let activeHeatColor=null;
 let captureParts=null;
 let activeBuildingTransform=null;
@@ -1994,19 +2000,27 @@ function drawBuilding(b,x,z){
   if(l>=5){box(.24,podium+.37,-.13,.17,.65,.30,wall);window(.336,podium+.39,-.13,.20,.36,true);box(.24,podium+.72,-.13,.21,.04,.34,pal.accent);}
   if(l>=6){box(-.12,podium+(l-2)*.28+.29,-.12,.024,.4,.024,pal.trim);box(-.02,podium+(l-2)*.28+.39,-.12,.22,.16,.025,pal.accent,.08);}
  }else if(type==='monument'){
+  activeBuildingTransform.yScale*=1.3;
   const stone='#c9c7ba',bronze='#647b7c',variant=(b.palette||0)%3;
   box(0,.035,0,.90,.07,.90,'#a4aaa6');box(0,.105,0,.65,.07,.65,stone);
+  box(0,.075,0,.79,.035,.79,'#e1dece');
+  for(const side of [-1,1]){box(side*.38,.10,0,.022,.04,.72,bronze);box(0,.10,side*.38,.72,.04,.022,bronze);}
+  box(0,.18,.183,.19,.09,.015,bronze);for(let k=0;k<3;k++)box(0,.16+k*.018,.194,.13,.006,.006,'#d4c9b6');
   if(variant===0){
    box(0,.22,0,.35,.16,.35,stone);oct(0,.63,0,.19,.67,.19,stone);
+   for(const y of [.34,.94])oct(0,y,0,.24,.045,.24,bronze);
    oct(0,1.045,0,.19,.16,.19,stone,0,'roof');
   }else if(variant===1){
    box(0,.25,0,.34,.23,.34,stone);box(-.065,.46,0,.065,.24,.09,bronze);box(.065,.46,0,.065,.24,.09,bronze);
    box(0,.65,0,.23,.25,.14,bronze);oct(0,.85,0,.15,.17,.15,bronze);
    box(-.16,.65,0,.08,.23,.08,bronze);box(.17,.79,0,.07,.35,.07,bronze);
+   box(0,.62,-.095,.26,.32,.035,bronze);box(.18,.99,0,.12,.05,.12,'#d4c9b6');oct(.18,1.07,0,.085,.12,.085,'#d4c9b6');
   }else{
    for(const dx of [-.25,.25]){box(dx,.47,0,.17,.66,.26,stone);box(dx,.18,0,.24,.08,.32,stone);box(dx,.78,0,.23,.10,.32,stone);}
    box(0,.85,0,.73,.13,.34,stone);box(0,.945,0,.78,.06,.39,stone);
    oct(0,.84,.18,.12,.15,.035,bronze);
+   for(const dx of [-.25,.25])for(const x of [-.045,0,.045])box(dx+x,.48,.137,.012,.46,.013,'#e1dece');
+   for(let k=-2;k<=2;k++)box(k*.125,.85,.179,.095,.085,.018,k%2?bronze:'#e1dece');
   }
  }else if(type==='park'&&b.parkLevels){
   // Draw in a 6x3 local frame, rotated for a north-south pair.
@@ -2025,6 +2039,13 @@ function drawBuilding(b,x,z){
   for(const dx of [-2.2,-.35,1.3,2.2]){box(dx,.16,-.24,.36,.05,.12,'#a78359');box(dx,.22,-.31,.36,.13,.025,'#ad8c62');}
   for(const dx of [-2.5,2.5])for(const dz of [-.50,.50]){box(dx,.09,dz,.23,.06,.29,'#60845d');for(let k=0;k<3;k++)box(dx-.07+k*.07,.13,dz,.045,.04,.20,k%2?'#d9909d':'#e8b978');}
   for(const [dx,dz] of centralParkLamps()){box(dx,.32,dz,.025,.56,.025,'#46656a');box(dx,.62,dz,.11,.055,.11,night>.3?'#ffda9b':'#e4d5ad',night*1.1);}
+  // Each half keeps its own saved level and adds a distinct civic feature.
+  parkLevelsAt(b).forEach((level,k)=>{
+   const x=(k-.5)*3;
+   if(level>=6){for(const dx of [-.42,.42])box(x+dx,.39,-.45,.05,.65,.05,'#bedce0');box(x,.73,-.45,1.02,.09,.68,'#a78359');for(let j=-2;j<=2;j++)box(x+j*.19,.80,-.45,.065,.05,.72,'#d4c9b6');}
+   if(level>=7){oct(x,.14,.40,.67,.18,.67,'#c5cdbe');oct(x,.24,.40,.56,.025,.56,'#63aebd');oct(x,.45,.40,.12,.42,.12,'#bedce0');oct(x,.67,.40,.37,.055,.37,'#c5cdbe');}
+   if(level>=8){for(let j=0;j<3;j++)box(x,.085+j*.055,1.01-j*.11,1.02-j*.12,.055,.12,'#c9c7ba');box(x,.88,-.45,.55,.18,.38,'#85bed1');for(const dx of [-.57,.57])oct(x+dx,.29,.40,.20,.42,.20,'#647b7c');}
+  });
  }else if(type==='park'){
   const size=(b.w||2)-.11;box(0,.028,0,size,.056,size,'#75a96c');
   box(0,.063,0,.18,.025,size-.03,'#d1c5a1');box(0,.064,0,size-.03,.025,.16,'#d1c5a1');if((b.w||2)>=3){for(let k=0;k<12;k++){const side=k%4,t=-.95+Math.floor(k/4)*.95,j=(terrainRand(b.anchor,S.mapSeed,k+90)-.5)*.12,dx=side<2?(side?1.13:-1.13):t+j,dz=side<2?t+j:(side===2?-1.13:1.13);drawTree(cx+dx,cz+dz,.65+terrainRand(b.anchor,S.mapSeed,k+130)*.35,k+b.anchor);}for(const dx of [-1.30,1.30])box(dx,.13,0,.12,.19,2.6,'#60845d');}
@@ -2043,16 +2064,18 @@ function drawBuilding(b,x,z){
  }else if(isIndustry(b)){
   const {w,d,body,stack,light,wide}=industryLayout(b),hallW=w*.72,hallD=d*.76,rows=Math.min(5,2+l),roofH=.14;
   box(0,.025,0,w,.05,d,'#a7b4a5');
-  box(-w*.09,body/2+.05,-d*.04,hallW,body,hallD,pal.walls[light?1:0]);
-  for(let k=0;k<rows;k++){const dz=-d*.04-hallD/2+(k+.5)*hallD/rows;
+  box(-w*.09,body/2+.05,-d*.04,hallW,body,hallD,light?'#dce7df':pal.walls[0]);
+  if(light){box(-w*.09,body+.08,-d*.04,hallW+.05,.06,hallD+.05,'#bedce0');window(-w*.09,body*.58,d*.34+.008,hallW*.9,body*.44);for(let k=0;k<2;k++)box(-w*.23+k*w*.28,body+.135,-d*.10,w*.22,.035,d*.30,'#315e82');}
+  for(let k=0;k<(light?0:rows);k++){const dz=-d*.04-hallD/2+(k+.5)*hallD/rows;
    drawBox(cx-w*.09,body+.05+roofH/2,cz+dz,hallW+.03,roofH,hallD/rows,pal.roof,0,0,'sawtooth');
    box(-w*.09,body+.05+roofH*.57,dz+hallD/rows/2+.004,hallW*.85,roofH*.60,.012,pal.window);
   }
   for(let k=0;k<Math.min(3,l);k++){const dx=-w*.09+(k-(Math.min(3,l)-1)/2)*hallW*.26;window(dx,.23,d*.34+.008,hallW*.20,.16);}
+  for(const side of [-1,1]){window(-w*.09+side*(hallW/2+.012),body*.67,-d*.04,hallD*.88,.13,true);for(let k=-2;k<=2;k++)box(-w*.09+side*(hallW/2+.025),body*.67,-d*.04+k*hallD*.16,.018,.15,.018,'#bedce0');}
   // Loading bay, metal service gantry and conveyor at the east edge.
   box(-w*.09,.17,d*.35,.20,.26,.025,'#344d56');box(-w*.09,.32,d*.38,.25,.04,.12,pal.accent);
   box(w*.37,.115,0,w*.15,.055,d*.72,'#53676b');for(const dz of [-d*.26,d*.26])box(w*.37,.065,dz,.025,.10,.04,'#758d91');
-  const count=wide?3:light?1:Math.min(2,1+Math.floor(l/3));
+  const count=light?0:wide?3:Math.min(2,1+Math.floor(l/3));
   for(let k=0;k<count;k++){const dx=-w*.32+k*w*.20,dz=-d*.36;
    box(dx,stack/2,dz,.068,stack,.068,pal.trim);box(dx,stack-.10,dz,.08,.052,.08,'#e44843',night*.9);box(dx,stack+.024,dz,.085,.025,.085,'#53676b');
   }
@@ -2080,6 +2103,10 @@ function drawBuilding(b,x,z){
   const count=Math.min(3,1+Math.floor(l/3));
   for(let k=0;k<count;k++){const dx=.29-k*.24,h=.98+l*.10;box(dx,h/2,-.24,.095,h,.095,'#b0a398');box(dx,h-.10,-.24,.128,.06,.128,'#e44843',night*.95);box(dx,h+.02,-.24,.14,.045,.14,'#5f7276');box(dx,h+.055,-.24,.048,.025,.048,'#e44843',night*.95);}
   for(let k=0;k<Math.min(4,l);k++)box(-.28+k*.16,.13,.37,.12,.17,.12,'#48575b');window(-.13,.35,.344,.24,.16);front(.35);
+  if(l>=2){oct(-.23,.77,.10,.24,.29,.24,'#758d91');box(-.23,.94,.10,.29,.04,.29,'#bedce0');}
+  if(l>=3){box(-.06,.75,-.10,.25,.24,.28,'#758181');window(-.06,.76,.048,.18,.13);}
+  if(l>=4){for(const x of [-.32,-.15]){box(x,.84,.27,.025,.44,.025,'#bedce0');box(x,.85,.27,.025,.025,.37,'#758d91');}}
+  if(l>=5){box(-.16,1.09,.05,.39,.24,.36,'#758181');window(-.16,1.09,.242,.30,.15);box(-.16,1.235,.05,.43,.05,.40,'#53676b');}
  }else if(type==='office'){
   const h=.65+l*.60;
   box(0,.18,0,.86,.34,.78,pal.trim);front(.40);
@@ -2137,7 +2164,7 @@ function drawBuilding(b,x,z){
   box(0,.18,.73,.76,.29,.29,'#d0dfcf');box(0,.35,.73,.82,.045,.34,'#53676b');
   window(0,.22,.885,.30,.12);
   box(.35,.12,-.12,.045,.045,1.40,'#758d91');
-  if(l>=2){box(-.24,.46,.73,.20,.19,.23,'#73acbd');box(.24,.44,.73,.18,.15,.22,'#758d91');}
+  if(l>=2){box(-.24,.46,.73,.20,.19,.23,'#73acbd');box(.24,.44,.73,.18,.15,.22,'#758d91');for(const z of [-.60,-.15])box(.33,.40,z,.10,.47,.32,'#73acbd');}
   if(l>=4){oct(.18,.57,.70,.28,.44,.28,'#73acbd');oct(.18,.80,.70,.31,.035,.31,'#bedce0');}
   if(l>=5){box(-.21,.68,.73,.30,.30,.25,'#d0dfcf');window(-.21,.70,.867,.22,.13);box(-.21,.85,.73,.33,.04,.29,'#315e82');}
  }else if(type==='research'){
@@ -2176,6 +2203,7 @@ function drawBuilding(b,x,z){
   if(l>=4){box(-.14,.39,-.06,.27,.025,1.58,'#6dcdc0');for(const z of [-.62,-.22,.18,.58])box(-.14,.407,z,.22,.01,.27,'#315c83');}
  }else if(type==='recycling'){
   box(0,.035,0,1.91,.07,1.91,'#807e59');
+  for(const x of [-.78,.78]){oct(x,.09,.78,.12,.06,.12,'#53676b');oct(x,.126,.78,.085,.018,.085,'#fff2ae',night*1.7);}
   for(const x of [-.90,.90]){box(x,.18,0,.025,.25,1.80,'#a0a99b');for(const z of [-.85,-.42,0,.42,.85])box(x,.20,z,.04,.37,.04,'#68766e');}
   for(const z of [-.90,.90])box(0,.18,z,1.80,.025,.025,'#a0a99b');
   for(let k=0;k<3+l;k++){const x=-.61+(k%3)*.55,z=-.54+Math.floor(k/3)*.52,h=.15+(k%3)*.07+l*.035;box(x,h/2+.05,z,.45,h,.39,['#9c9670','#758779','#969186'][k%3]);box(x+.03,h+.06,z,.29,.13,.28,['#b7afa0','#71988a','#aaa078'][k%3]);for(let n=0;n<3;n++)box(x-.13+n*.12,h+.15,z+(n%2)*.07,.085,.065,.10,['#6f8b9d','#c5a577','#b4b4a1'][n]);}
@@ -2183,7 +2211,12 @@ function drawBuilding(b,x,z){
  }else if(type==='school'){
   const h=.34+Math.min(l,3)*.17;
   box(-.12,h/2+.04,-.12,.60,h,.48,'#d7b681');
-  drawBox(cx-.12,h+.10,cz-.12,.67,.18,.56,'#9a6656',0,0,'roof');
+  box(-.12,h+.075,-.12,.67,.07,.56,'#647e85');
+  box(-.12,h+.02,.17,.58,.13,.04,'#527da2');
+  // Open-book emblem, broad classroom glazing and a fenced playground.
+  for(const side of [-1,1])box(-.12+side*.052,h+.025,.197,.09,.075,.012,'#f0ead4');
+  window(-.12,.30,-.372,.48,.17);window(-.433,.30,-.12,.35,.17,true);
+  for(const x of [-.43,-.08])box(x,.10,.45,.023,.15,.023,'#bedce0');box(-.255,.17,.45,.37,.018,.018,'#bedce0');
   for(let f=0;f<Math.min(l,3);f++)for(const dx of [-.32,-.12,.08])window(dx,.21+f*.17,.131,.13,.11);
   box(.28,.20,.04,.24,.35,.64,'#c18e65');box(.28,.40,.04,.29,.055,.69,'#647e85');
   box(-.12,.18,.15,.14,.28,.025,'#344d56');box(-.12,.34,.20,.24,.045,.17,'#dfd6b8');
@@ -2223,6 +2256,11 @@ function drawBuilding(b,x,z){
    box(.23,h+.16,-.15,.27,.28,.30,wall);
    box(-.245,h+.20,.12,.035,.25,.035,trim);box(-.245,h+.29,.15,.065,.21,.03,'#e44843',night*.95);box(-.245,h+.29,.154,.20,.065,.03,'#e44843',night*.95);
    if(type==='hospital'){box(.23,h+.325,-.15,.30,.025,.33,'#8caaa1');box(.23,h+.344,-.15,.18,.01,.035,'#f0e7cc');box(.17,h+.344,-.15,.028,.01,.18,'#f0e7cc');box(.29,h+.344,-.15,.028,.01,.18,'#f0e7cc');}
+   if(type==='clinic'){
+    if(l>=2){box(-.22,.25,.36,.31,.38,.19,wall);window(-.22,.27,.462,.23,.19);box(-.22,.47,.36,.36,.045,.23,trim);}
+    if(l>=3){box(-.20,h+.23,-.12,.31,.34,.34,wall);window(-.20,h+.24,.062,.23,.20);box(-.20,h+.42,-.12,.36,.045,.38,trim);}
+    if(l>=4){box(0,h+.49,-.12,.69,.045,.59,'#bedce0');for(const x of [-.24,0,.24])box(x,h+.53,-.12,.18,.025,.37,'#315e82');}
+   }
   }else if(type==='fire'){
    for(const dx of [-.26,0,.26]){box(dx,.20,.335,.20,.30,.02,'#445f68');for(let k=0;k<3;k++)box(dx,.12+k*.07,.35,.18,.013,.015,'#849b9b');}
    box(-.30,h+.28,-.20,.16,.49,.19,trim);
@@ -2342,8 +2380,8 @@ function cityParticles(time=performance.now()*.001,buildings=uniqueBuildings()){
    }
   }
   if(isIndustry(b)&&b.industryEfficiency>0&&operational(b.anchor)){
-   const {w,d,stack,light}=industryLayout(b),count=light?3:5;
-   for(let k=0;k<count;k++){const age=(industryClock*.25+k/count)%1;addSmoke(-w*.32,stack+.05+age*.85,-d*.36,age,.07+age*.22,[.58,.60,.59,(1-age)*(light?.22:.45)*b.industryEfficiency],.8);}
+   const {w,d,stack,light,wide}=industryLayout(b),count=light?3:7,chimneys=light?0:wide?3:Math.min(2,1+Math.floor(b.level/3));
+   for(let chimney=0;chimney<chimneys;chimney++)for(let k=0;k<count;k++){const age=(time*.27+k/count+terrainRand(b.anchor,chimney,8))%1;addSmoke(-w*.32+chimney*w*.20,stack+.05+age*.95,-d*.36,age,.055+age*.16,[.49,.51,.50,(1-age)*.55*b.industryEfficiency],.65);}
   }
   if(b.type==='nuclear'&&operational(b.anchor)){for(const dx of [-.51])for(let k=0;k<8;k++){const age=(time*.23+k/8+terrainRand(b.anchor,k,16)*.07)%1;addSmoke(dx,.79+b.level*.095+age*1.25,-.09+Math.sin(k)*age*.11,age,.16+age*.40,[.88,.92,.91,Math.pow(1-age,.7)*.64],.65);}}
   if(b.fire){
@@ -2359,6 +2397,7 @@ function cityParticles(time=performance.now()*.001,buildings=uniqueBuildings()){
  return particles;
 }
 function drawChimneyPulses(sun,buildings=uniqueBuildings()){
+ if(S.layer!=='none')return; // The static chimneys already carry the layer color.
  activeBuildingTransform=null;activeHeatColor=null;const t=performance.now()*.001;
  for(const b of buildings)if(b.type==='coal'&&operational(b.anchor)){
   const center=buildingCenterWorld(b),a=(b.rot||0)*Math.PI/2,c=Math.cos(a),sn=Math.sin(a),stretch=((b.rot||0)%2?(b.h||1):(b.w||1))*.95;
@@ -2371,6 +2410,7 @@ function drawChimneyPulses(sun,buildings=uniqueBuildings()){
 }
 
 function drawCityParticles(sun,buildings=uniqueBuildings()){
+ if(S.layer!=='none')return;
  const particles=cityParticles(performance.now()*.001,buildings);if(!particles.length)return;
  particles.sort((a,b)=>Math.hypot(b.x-camEye[0],b.y-camEye[1],b.z-camEye[2])-Math.hypot(a.x-camEye[0],a.y-camEye[1],a.z-camEye[2]));
  restoreCubeBindings();activeBuildingTransform=null;activeHeatColor=null;
@@ -2400,19 +2440,21 @@ function hasCrosswalk(i){
 function roadLamp(i,level){
  if(level<4)return null;const n=roadNeighbors(i),horizontal=(n.L||n.R)||(!n.U&&!n.D),width=clamp(.25+(level-1)*.075,.25,.80);
  if(Object.values(n).filter(Boolean).length<3&&terrainRand(i,S.mapSeed,81)>=.60)return null;
- return {x:horizontal?-.32:width/2+.055,z:horizontal?width/2+.055:-.32,horizontal};
+ const side=terrainRand(i,S.mapSeed,82)<.5?-1:1;
+ return {x:horizontal?-.32:side*(width/2+.055),z:horizontal?side*(width/2+.055):-.32,horizontal,side};
 }
 function roadLaneDividers(level,width){return Array.from({length:Math.max(0,ROAD_LANES[level]-1)},(_,k)=>-width/2+width*(k+1)/ROAD_LANES[level]);}
 function drawRoadTile(i,b,w){
+ activeHeatColor=buildingHeatColor(b);
  const n=roadNeighbors(i),lev=b.level,width=clamp(.25+(lev-1)*.075,.25,.80),col=buildingHeatColor(b)||roadColor(0),crosswalk=hasCrosswalk(i);
  const arms=[];if(n.L)arms.push([-.25,0,.50,width]);if(n.R)arms.push([.25,0,.50,width]);if(n.U)arms.push([0,-.25,width,.50]);if(n.D)arms.push([0,.25,width,.50]);
  const horiz=(n.L||n.R)||(!n.U&&!n.D),vert=n.U||n.D;
  const lamp=roadLamp(i,lev),night=clamp(1-currentSun().daylight,0,1);
- if(lamp){const dx=lamp.x,dz=lamp.z,h=lamp.horizontal;drawBox(w.x+dx,.30,w.z+dz,.023,.57,.023,'#4e6b70');drawBox(w.x+dx-(h?0:.09),.59,w.z+dz-(h?.09:0),h?.07:.21,.035,h?.21:.07,'#758d91');drawBox(w.x+dx-(h?0:.15),.567,w.z+dz-(h?.15:0),.07,.015,.07,'#fff2ae',0,night*2.3);}
+ if(lamp){const dx=lamp.x,dz=lamp.z,h=lamp.horizontal,s=lamp.side;drawBox(w.x+dx,.21,w.z+dz,.0161,.399,.0161,'#4e6b70');drawBox(w.x+dx-(h?0:.063*s),.413,w.z+dz-(h?.063*s:0),h?.049:.147,.0245,h?.147:.049,'#758d91');drawBox(w.x+dx-(h?0:.105*s),.3969,w.z+dz-(h?.105*s:0),.049,.0105,.049,'#fff2ae',0,night*2.3);}
  if(lev>=4&&Object.values(n).filter(Boolean).length>=3){
   for(const [dx,dz,side] of [[-.41,.41,false],[.41,-.41,true]]){
-   drawBox(w.x+dx,.23,w.z+dz,.023,.46,.023,'#4e6b70');drawBox(w.x+dx,.43,w.z+dz,.075,.19,.06,'#263a43');
-   for(let k=0;k<3;k++)drawBox(w.x+dx,.485-k*.052,w.z+dz+(side?-.035:.035),.043,.036,.012,k===(side?2:0)?(side?'#72d996':'#e44843'):'#3d535a',0,k===(side?2:0)?.8:0);
+   drawBox(w.x+dx,.161,w.z+dz,.0161,.322,.0161,'#4e6b70');drawBox(w.x+dx,.301,w.z+dz,.0525,.133,.042,'#263a43');
+   for(let k=0;k<3;k++)drawBox(w.x+dx,.3395-k*.0364,w.z+dz+(side?-.0245:.0245),.0301,.0252,.0084,k===(side?2:0)?(side?'#72d996':'#e44843'):'#3d535a',0,k===(side?2:0)?.8:0);
   }
  }
  if(S.river[i]){
@@ -2444,23 +2486,28 @@ function drawRoadTile(i,b,w){
  if(!crosswalk){
   for(const offset of roadLaneDividers(lev,width))for(const t of [-.33,0,.33]){
    const marking=Math.abs(offset)<.001?'#e0d4b4':'#eee8d3';
-   if(horiz&&!vert)drawBox(w.x+t,.050,w.z+offset,.18,.005,.010,marking);
-   if(vert&&!horiz)drawBox(w.x+offset,.050,w.z+t,.010,.005,.18,marking);
+   if(horiz&&(!vert||(t<0?n.L:t>0?n.R:n.L&&n.R)))drawBox(w.x+t,.050,w.z+offset,.18,.005,.010,marking);
+   if(vert&&(!horiz||(t<0?n.U:t>0?n.D:n.U&&n.D)))drawBox(w.x+offset,.051,w.z+t,.010,.005,.18,marking);
   }
  }
  if(crosswalk)for(let k=-2;k<=2;k++)drawBox(w.x+(horiz?k*.075:0),.052,w.z+(vert?k*.075:0),horiz?.037:width*.9,.006,vert?.037:width*.9,'#eee8d3');
+ activeHeatColor=null;
 }
 let industryClock=0;
 function drawIndustryProduction(buildings){
+ const previousCaptureScene=captureScene;captureScene=true;
  activeBuildingTransform=null;activeHeatColor=null;
  for(const b of buildings){if(!isIndustry(b)||!(b.industryEfficiency>0)||!operational(b.anchor))continue;
+  activeHeatColor=buildingHeatColor(b);
   const c=buildingCenterWorld(b),a=(b.rot||0)*Math.PI/2,{w,d}=industryLayout(b),pal=buildingPalette(b),count=b.type==='industrial_complex'?5:2;
   for(let k=0;k<count;k++){const phase=(industryClock*.24*b.industryEfficiency+k/count)%1,dx=w*.37,dz=(phase-.5)*d*.62;
    drawBox(c.x+dx*Math.cos(a)+dz*Math.sin(a),.18,c.z-dx*Math.sin(a)+dz*Math.cos(a),w*.10,.075,.095,pal.accent,a);
   }
  }
+ captureScene=previousCaptureScene;activeHeatColor=null;
 }
 function drawRiverSurface(){
+ activeHeatColor=null;
  const t=performance.now()*.001;
  for(let i=0;i<S.river.length;i++)if(S.river[i]&&!S.grid[i]){
   const c=coord(i),w=worldFromCell(c.x,c.z);
@@ -2564,12 +2611,14 @@ function vertexDataForParts(parts){
  const data=new Float32Array(parts.reduce((n,p)=>n+geometryFor(p.mesh).indices.length,0)*12);let offset=0;
  for(const p of parts){const c=Math.cos(p.ry),sn=Math.sin(p.ry),rgb=color(p.col),geometry=geometryFor(p.mesh),meshPos=geometry.pos,meshNorm=geometry.norm,surface=surfaceFor(p.col);
   for(const ix of geometry.indices){const j=ix*3,x=meshPos[j]*p.sx,y=meshPos[j+1]*p.sy,z=meshPos[j+2]*p.sz,nx=meshNorm[j],ny=meshNorm[j+1],nz=meshNorm[j+2];
+   // Transparent liquids have a surface, not overlapping internal cell walls.
+   if(WATER_COLORS.has(p.col)&&ny<.99)continue;
    data[offset++]=p.x+x*c+z*sn;data[offset++]=p.y+y;data[offset++]=p.z-x*sn+z*c;
    data[offset++]=nx*c+nz*sn;data[offset++]=ny;data[offset++]=-nx*sn+nz*c;
    data[offset++]=rgb[0];data[offset++]=rgb[1];data[offset++]=rgb[2];data[offset++]=p.em;data[offset++]=surface[0];data[offset++]=surface[1];
   }
  }
- return data;
+ return data.subarray(0,offset);
 }
 function drawBatch(buffer,count,sun){
  if(!count)return;gl.useProgram(batchProgram);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
@@ -2581,7 +2630,7 @@ function drawBatch(buffer,count,sun){
 function compileScenery(sun,buildings=uniqueBuildings()){
  captureParts=[];captureScene=true;
   for(let z=0;z<H;z++)for(let x=0;x<W;x++){
-    const i=idx(x,z),b=S.grid[i],w=worldFromCell(x,z);let col=S.landUnlocked[i]?((x+z)%2?"#7ca66c":"#779f67"):((x+z)%2?"#426d50":"#3e674c");if(S.river[i]){drawBox(w.x,-.22,w.z,1.006,.12,1.006,'#3d6266');drawBox(w.x,-.105,w.z,1.006,.075,1.006,S.landUnlocked[i]?'#3e8998':'#326d7a',0,.05);}else drawBox(w.x,-.035,w.z,1.006,.07,1.006,col);if(b&&b.type==='road')drawRoadTile(i,b,w);
+    const i=idx(x,z),b=S.grid[i],w=worldFromCell(x,z);let col=S.landUnlocked[i]?((x+z)%2?"#7ca66c":"#779f67"):((x+z)%2?"#426d50":"#3e674c");if(S.river[i]){drawBox(w.x,-.22,w.z,1.006,.12,1.006,'#3d6266');drawBox(w.x,-.105,w.z,1,.075,1,'#3e8998',0,.05);}else drawBox(w.x,-.035,w.z,1.006,.07,1.006,col);if(b&&b.type==='road')drawRoadTile(i,b,w);
   }
   // Maleza determinista pero visualmente irregular: árboles, arbustos y rocas sin patrón de cuadrícula.
   for(let i=0;i<S.landUnlocked.length;i++)if(!S.landUnlocked[i]&&!S.grid[i]&&!S.river[i]){
@@ -2618,7 +2667,8 @@ function drawLampPools(sun,buildings=uniqueBuildings()){
  gl.enable(gl.BLEND);gl.blendFunc(gl.CONSTANT_ALPHA,gl.ONE_MINUS_CONSTANT_ALPHA);gl.depthMask(false);
  const pool=(x,z,y,r)=>{for(let k=0;k<4;k++){gl.blendColor(0,0,0,night*.13);drawBox(x,y+k*.001,z,r*(1-k*.20),.001,r*(1-k*.20),'#ffe4a0',0,.8,'octagon');}};
  for(const b of buildings){
-  if(b.type==='road'){const lamp=roadLamp(b.anchor,b.level);if(lamp){const w=buildingCenterWorld(b);pool(w.x+lamp.x-(lamp.horizontal?0:.15),w.z+lamp.z-(lamp.horizontal?.15:0),.075,.90);}}
+  if(b.type==='road'){const lamp=roadLamp(b.anchor,b.level);if(lamp){const w=buildingCenterWorld(b);pool(w.x+lamp.x-(lamp.horizontal?0:.105*lamp.side),w.z+lamp.z-(lamp.horizontal?.105*lamp.side:0),.075,.63);}}
+  if(b.type==='recycling'){const w=buildingCenterWorld(b),a=(b.rot||0)*Math.PI/2;for(const side of [-1,1]){const x=side*.78*(b.w||2)/2,z=.78*(b.h||2)/2;pool(w.x+x*Math.cos(a)+z*Math.sin(a),w.z-x*Math.sin(a)+z*Math.cos(a),.08,.55);}}
   if(b.type==='park'){const w=buildingCenterWorld(b),a=(b.parkLevels?(b.h===6?1:0):(b.rot||0))*Math.PI/2;for(const [x,z] of (b.parkLevels?centralParkLamps():parkLampOffsets(b.level)))pool(w.x+x*Math.cos(a)+z*Math.sin(a),w.z-x*Math.sin(a)+z*Math.cos(a),.08,.55);}
  }
  gl.depthMask(true);gl.disable(gl.BLEND);
@@ -2650,8 +2700,10 @@ function projectPoint(x,y,z){
   const r=canvas.getBoundingClientRect();
   return{x:(nx*.5+.5)*r.width,y:(1-(ny*.5+.5))*r.height};
 }
+let popupPosition=null;
 function updatePopupPosition(){
   if(!popup.classList.contains("visible"))return;
+  if(popupPosition&&S.selectedLand==null){popup.style.left=popupPosition.left;popup.style.top=popupPosition.top;return;}
   let p;
   if(S.selectedLand!=null){const c=coord(S.selectedLand),w=worldFromCell(c.x,c.z);p=projectPoint(w.x,.25,w.z);}else{if(S.selected==null||!S.grid[S.selected])return;const b=S.grid[S.selected],w=buildingCenterWorld(b);p=projectPoint(w.x,buildingHeight(b.type,b.level)+.45,w.z);}if(!p)return;
   const pw=popup.offsetWidth||290,ph=popup.offsetHeight||220;
@@ -2659,6 +2711,7 @@ function updatePopupPosition(){
   left=Math.max(8,Math.min(shell.clientWidth-pw-8,left));
   top=Math.max(8,Math.min(shell.clientHeight-ph-8,top));
   popup.style.left=left+"px";popup.style.top=top+"px";
+  if(S.selectedLand==null)popupPosition={left:popup.style.left,top:popup.style.top};
 }
 function rayToGround(clientX,clientY){
   const r=canvas.getBoundingClientRect(),x=((clientX-r.left)/r.width)*2-1,y=1-((clientY-r.top)/r.height)*2;
@@ -2810,6 +2863,7 @@ function updateMapStatus(){
  $('#roadTools').hidden=S.tool!=='road';$('#roadBuildMode').classList.toggle('active',S.roadAction==='build');$('#roadUpgradeMode').classList.toggle('active',S.roadAction==='upgrade');
  updateRoadQuote();
  $('#landBtn').classList.toggle('active',S.tool==='land');
+ $('#landBtn').setAttribute('aria-pressed',String(S.tool==='land'));
  if(S.moving){$('#mapStatus').textContent=`Desplazar ${DEF[S.moving.type].name} · conserva nivel · Esc cancela`;return;}
  if(S.tool==='land'){$('#mapStatus').textContent='Urbanizar · arrastra para seleccionar · confirma el coste';return;}
   $("#mapStatus").textContent=S.tool==="inspect"?"Modo: inspección":S.tool==="road"?(S.roadAction==='upgrade'?'Carreteras · arrastra sobre varias para mejorarlas juntas':`Carretera · ${euro(buildPrice('road'))}/casilla · arrastra para trazar`):`Construir: ${DEF[S.tool].name} · ${euro(buildPrice(S.tool))}`;
@@ -2825,6 +2879,8 @@ function renderEmergency(){
 }
 const TOP_ICONS={inspectBtn:['Inspeccionar','<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/>'],landBtn:['Urbanizar','<path d="M6 3h10l3 3v15H5V3h1M15 3v5h4M8 11h8M8 15h5m0 4 4-4"/>'],mainMenuBtn:['Pantalla de inicio','<path d="m3 11 9-8 9 8M6 9v12h4v-7h4v7h4V9"/>'],rotateBtn:['Girar edificio · R','<path d="M20 9a8 8 0 1 0 0 7M20 3v6h-6"/>'],dayNightBtn:['Día/noche','<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/>'],musicBtn:['Música','<path d="M9 18V5l12-2v13M9 8l12-2"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'],soundBtn:['Efectos','<path d="M3 9h4l5-4v14l-5-4H3ZM16 8q5 4 0 8M19 5q8 7 0 14"/>']};
 function refreshTopIcons(){for(const [id,[label,path]] of Object.entries(TOP_ICONS)){const el=$('#'+id),title=id==='soundBtn'?`Sonido: ${soundEnabled?'activado':'desactivado'}`:id==='dayNightBtn'?`Ciclo día/noche: ${S.dayNight!==false?'activado':'desactivado'}`:label;el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;el.title=title;el.setAttribute('aria-label',title);if(id==='soundBtn'||id==='musicBtn'){const on=id==='soundBtn'?soundEnabled:musicEnabled;el.classList.toggle('active',on);el.setAttribute('aria-pressed',String(on));el.title=(id==='soundBtn'?'Efectos':'Música')+': '+(on?'activados':'desactivados');el.setAttribute('aria-label',el.title);}}document.body.style.setProperty('--header-height',Math.ceil($('.top').getBoundingClientRect().height)+'px');document.body.style.setProperty('--hud-height',Math.ceil($('.hud').getBoundingClientRect().height)+'px');}
+TOP_ICONS.citySave=['Guardar partida','<path d="M4 3h13l3 3v15H4ZM8 3v6h8V3M8 21v-8h8v8"/>'];
+TOP_ICONS.cityLogout=['Cerrar sesión','<path d="M10 3H4v18h6M9 12h12m-5-5 5 5-5 5"/>'];
 function renderUI(recalculate=true){
   if(recalculate)calc();renderResearchAndLoan();renderEmergency();renderCityGuide();$('#cityTitle').textContent=S.cityName||'Mi ciudad';$('#dayNightBtn').textContent=S.dayNight===false?'☀ Día fijo':'☀ Día/noche';$('#dayNightBtn').setAttribute('aria-pressed',String(S.dayNight!==false));$('#dayNightBtn').classList.toggle('active',S.dayNight!==false);$('#rotateBtn').hidden=!['coal','hospital','nuclear','solar','transit','wastewater'].includes(S.moving?.type||S.tool);$('#cityProgressFill').style.width=(S.cityLevel>=LEVELS.length?100:clamp(S.pop/LEVELS[S.cityLevel].pop*100))+'%';
   const totalHours=Math.floor(visualHour()),dayNo=Math.floor(totalHours/24)+1,clock=((visualHour()%24)+24)%24,hour=Math.floor(clock),minute=Math.floor((clock-hour)*60),sunInfo=currentSun();
@@ -2860,7 +2916,7 @@ function renderUI(recalculate=true){
   $("#waterText").textContent=`${Math.round(S.waterUse)} / ${Math.round(S.waterCap)}`;
   const pr=S.powerUse?S.powerUse/Math.max(1,S.powerCap)*100:0,wr=S.waterUse?S.waterUse/Math.max(1,S.waterCap)*100:0;
   $("#powerBar").style.width=Math.min(100,pr)+"%";$("#waterBar").style.width=Math.min(100,wr)+"%";
-  $("#powerBar").style.background=S.powerUse>S.powerCap?"var(--red)":"var(--cyan)";
+  $("#powerBar").style.background="#f4cc45";
   $("#waterBar").style.background=S.waterUse>S.waterCap?"var(--red)":"var(--blue)";
   $("#powerStatus").textContent=S.powerUse===0?`Red regional inicial · ${power(STARTER_POWER_CAP)} de capacidad`:S.powerUse<=S.powerCap?`Cobertura completa · margen ${power(S.powerCap-S.powerUse)}`:`Déficit ${power(S.powerUse-S.powerCap)} · amplía generación`;
   $("#waterStatus").textContent=S.waterUse===0?"Sin demanda":S.waterUse<=S.waterCap?`Margen ${Math.round(S.waterCap-S.waterUse)}`:`Déficit ${Math.round(S.waterUse-S.waterCap)}`;
