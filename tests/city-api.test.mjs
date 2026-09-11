@@ -28,6 +28,12 @@ test('Solar N6 saves and reloads through the authenticated API; N7 is rejected',
  city.buildings[0].level=7;assert.equal((await call('city','PUT',{version:1,state:city},b.cookie)).status,400);assert.equal((await call('city','GET',undefined,b.cookie)).body.state.buildings[0].level,6);
  sqlite.prepare('DELETE FROM city_saves WHERE account_id=(SELECT id FROM city_accounts WHERE username_key=?)').run('prueba_b');
 });
+test('Integrated solar and 2x2 nuclear saves are valid; old nuclear footprints remain compatible',()=>{
+ const city={...state,format:4,width:36,height:36,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),technologies:['solar','nuclear']};
+ const solar={type:'solar_complex',level:6,w:2,h:2,anchor:200,rot:0,palette:47,occ:0,fire:0},nuclear={type:'nuclear',level:3,w:2,h:2,anchor:300,rot:0,palette:0,occ:0,fire:0};
+ let saved=validateCity({...city,buildings:[solar,nuclear]});assert.equal(saved.buildings[0].palette,47);assert.equal(saved.buildings[1].w,2);assert.throws(()=>validateCity({...city,buildings:[{...solar,w:1}]}));
+ saved=validateCity({...city,buildings:[{...nuclear,w:2,h:1}]});assert(saved.buildings[0].legacyFootprint);saved=validateCity({...city,buildings:[{...nuclear,w:1,h:2,rot:1}]});assert(saved.buildings[0].legacyFootprint);
+});
 test('Wrong passwords, missing sessions and cross-origin writes rejected',async()=>{assert.equal((await call('login','POST',{username:'Prueba_A',password:'wrong-password'})).status,401);assert.equal((await call('city')).status,401);assert.equal((await call('city','PUT',{version:0,state},a.cookie,{Origin:'https://attacker.invalid'})).status,403);assert.equal((await call('login','POST',{username:'PRUEBA_A',password:'contraseña-A-123'})).status,200);});
 test('Cities isolated by authenticated session; caller-supplied owner ignored',async()=>{assert.equal((await call('city','PUT',{version:0,state,accountId:'other'},a.cookie)).status,200);assert.equal((await call('city','GET',undefined,b.cookie)).body.state,null);const saved=await call('city','GET',undefined,a.cookie);assert.equal(saved.body.state.money,8500);assert.equal(saved.body.version,1);});
 test('Atomic versions prevent concurrent overwrites and preserve last save',async()=>{assert.equal((await call('city','PUT',{version:1,state:{...state,money:9000}},a.cookie)).status,200);assert.equal((await call('city','PUT',{version:1,state:{...state,money:5}},a.cookie)).status,409);assert.equal((await call('city','GET',undefined,a.cookie)).body.state.money,9000);});
