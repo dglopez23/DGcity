@@ -9,11 +9,77 @@ const ctx={document:doc,window:{addEventListener(){}},performance:{now:()=>1000}
 vm.createContext(ctx);
 let js=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 js=js.replace(/\}\)\(\);\s*$/, `Object.assign(thisTest,{renderResearchAndLoan,transitRoadRelief,buildingEmissions,operational,cityNews,upgradeToMaximum,roadConstructionQuote,advanceGuide,guideRequirementMet,presentNextNews,addEvent,currentUnlockAdvice,computeGoods,goodsDemand,goodsRequirement,goodsCanPlace,goodsFactor,industrialFusionGroup,roadComponents,computeTraffic,clearBuilding,isIndustry,getGoodsRoutes:()=>goodsRoutes,getTrafficRoutes:()=>trafficRoutes,captureProduction:buildings=>{captureParts=[];drawIndustryProduction(buildings);const p=captureParts;captureParts=null;return p;},parkFusionGroup,parkSections,localResidentialSatisfaction,roadLaneDividers,ROAD_LANES,roadLamp,FS,repayLoan,researchDemand,surfaceFor,parkLampOffsets,shortestRoadPath,laneOffset,tickSimulation,markActivity,getSpeed:()=>runningSpeed,fireProbability,debugAdvanceLevel,buildingPalette,crossfadeMusic,toggleAnalysis,setLayer,setFrame:n=>lastFrame=n,upgradeSpace,renderEmergency,windowLight,hasCrosswalk,roadColor,roadDragQuote,metricAvailable,layerValue,localServices,cityParticles,getServiceCars:()=>serviceCars,fusionGroup,mergeSelected,renameCity,rotatePlacement,generateRiver,buildingDef,buildingUpgradeCost,canPlace,currentSun,drawRoadTile,renderCityGuide,takeLoan,loanLimit,loanHourly,loanTerms,unlockTechnology,buildingLocked,buildPrice,taxDiscomfort,spreadFires,fireProtection,trafficSpeedFactor,simulationRate,serviceEfficiency,citySnapshot,restoreCity,setDebug,canAfford,changeMoney,ensureLevel,maxAllowedLevel,commercialRevenue,apportion,buildingStats,renderUI,buildRoadDrag,demolishSelected,getState:()=>S,setState:s=>S=s,newState,DEF,LEVELS,UP_MULT,idx,coord,footprint,build,calc,advance,uniqueBuildings,placementRotation,buildingCells,openPopup,moveSelected,placeMoved,cancelAction,showLandPopup,buySelectedLand,upgradeSelected,upgradeCost,drawBuilding,thumbSVG,power,STAR_FIELD,render3D,updateCars,getCars:()=>cars,setSpeed:n=>{runningSpeed=n;if(n)markActivity(lastFrame)},resetCars:()=>cars=[],captureRoad:(i)=>{captureParts=[];const c=coord(i),w=worldFromCell(c.x,c.z);drawRoadTile(i,S.grid[i],w);const p=captureParts;captureParts=null;return p;},geometryFor,smogAmount,capture:b=>{captureParts=[];const fp=b.parkLevels?{w:b.w,h:b.h}:footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;return p;}});})();`);
-js=js.replace('Object.assign(thisTest,{','Object.assign(thisTest,{serviceContribution,serviceDelta,attractiveness,influenceRadius,maximumUpgradeCost,utilityStatus,statLabel,lightIndustrialFusionGroup,ironicHeadlines,nameNewCity,vertexDataForParts,closePopup,updatePopupPosition,renderPalette,buildingSpecs,captureLayer:b=>{captureParts=[];captureScene=true;const fp=footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;captureScene=false;return p;},captureLayerRoad:i=>{captureParts=[];captureScene=true;const c=coord(i);drawRoadTile(i,S.grid[i],worldFromCell(c.x,c.z));const p=captureParts;captureParts=null;captureScene=false;return p;},');
+js=js.replace('Object.assign(thisTest,{','Object.assign(thisTest,{portWaterfront,cargoShipPose,riverShippingPath,nuisanceRadius,satisfactionDetails,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,WALK_SPEED,CAR_MAX_SPEED,getWalk:()=>walk,getEye:()=>camEye,visitPointerDown,visitPointerMove,visitPointerUp,captureInfluence:b=>{captureParts=[];drawInfluence(b);const parts=captureParts;captureParts=null;return parts;},serviceContribution,serviceDelta,attractiveness,influenceRadius,maximumUpgradeCost,utilityStatus,statLabel,lightIndustrialFusionGroup,ironicHeadlines,nameNewCity,vertexDataForParts,closePopup,updatePopupPosition,renderPalette,buildingSpecs,captureLayer:b=>{captureParts=[];captureScene=true;const fp=footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;captureScene=false;return p;},captureLayerRoad:i=>{captureParts=[];captureScene=true;const c=coord(i);drawRoadTile(i,S.grid[i],worldFromCell(c.x,c.z));const p=captureParts;captureParts=null;captureScene=false;return p;},');
 ctx.thisTest={};vm.runInContext(js,ctx);const g=ctx.thisTest;
 function reset(){g.setState(g.newState());const s=g.getState();s.landUnlocked.fill(true);s.river.fill(false);s.money=1e8;s.cityLevel=8;s.day=100;s.unlockAt=Object.fromEntries(Object.keys(g.DEF).map(t=>[t,0]));s.technologies=['solar','wastewater','university','hospital','nuclear'];return s;}
 function add(x,z,t,l=1,occ=0){const s=g.getState(),i=g.idx(x,z);if(['solar','wastewater','university','hospital','nuclear'].includes(t))s.researchCap=(s.researchUse||0)+10;g.build(i,t);const b=s.grid[i];assert(b&&b.type===t,`build ${t} ${x},${z}`);b.level=l;b.occ=occ;return b;}
 const results=[];function test(n,f){f();results.push(n);console.log('PASS',n)}
+
+
+test('Late population goals and construction tiers scale base and upgrade prices consistently',()=>{
+ reset();assert.equal(g.LEVELS[6].pop/g.LEVELS[5].pop,2.5);assert.equal(g.LEVELS[7].pop/g.LEVELS[6].pop,2);
+ for(const [type,original,factor] of [['solar',9000,2],['monument',25000,3],['hospital',38000,6],['nuclear',75000,12]]){
+  assert.equal(g.buildPrice(type),original*factor);if(g.DEF[type].max>1)assert.equal(g.upgradeCost(type,1),Math.round(original*factor*.8));
+ }
+ assert.equal(g.buildingUpgradeCost({type:'light_industrial_complex',level:1}),g.upgradeCost('light_industrial_complex',1));
+});
+test('Wind uses solar output in half the area, more research and mandatory increasing materials',()=>{
+ const s=reset();for(let city=6;city<=8;city++){s.cityLevel=city;assert.equal(g.maxAllowedLevel('wind'),g.maxAllowedLevel('solar')-1);}
+ for(let level=1;level<=5;level++){assert.equal(g.DEF.wind.powerCap[level],g.DEF.solar.powerCap[level]);assert(g.researchDemand('wind',level)>g.researchDemand('solar',level));assert(g.goodsRequirement('wind',level)>0);if(level>1)assert(g.goodsRequirement('wind',level,level-1)>0);}
+ assert.equal(g.footprint('wind').w*g.footprint('wind').h,1);assert.equal(g.footprint('solar').w*g.footprint('solar').h,2);
+ for(const type of ['research','monument']){assert(g.goodsRequirement(type)>0);assert(g.buildingLocked(type));}
+ s.debug=true;add(8,8,'road');const lab=add(8,9,'research');s.debug=false;g.openPopup(lab.anchor);const level=lab.level,money=s.money;g.upgradeSelected();assert.equal(lab.level,level);assert.equal(s.money,money);
+});
+test('Ports require water along the correct full long side in every orientation and when moved',()=>{
+ for(let rot=0;rot<4;rot++){const s=reset(),anchor=g.idx(12,12),fp=g.footprint('port',rot);s.manualRotation=rot;s.debug=true;
+  const shore=Array.from({length:3},(_,k)=>rot===0?[13,12+k]:rot===1?[12+k,11]:rot===2?[11,12+k]:[12+k,13]);
+  shore.forEach(([x,z])=>s.river[g.idx(x,z)]=true);assert(g.canPlace(anchor,'port',rot));assert.equal(g.portWaterfront(anchor,rot).length,3);
+  s.river[g.idx(...shore[1])]=false;assert(!g.canPlace(anchor,'port',rot));s.river[g.idx(...shore[1])]=true;
+  g.build(anchor,'port');const port=s.grid[anchor];assert(port);assert.equal(port.cells.length,3);g.openPopup(anchor);g.moveSelected();g.placeMoved(g.idx(20,20));assert.equal(port.anchor,anchor);assert.equal(s.moving,port);g.cancelAction();
+  for(let level=1;level<=5;level++)assert(g.DEF.port.goods[level]/3>g.DEF.light_industry.goods[level]);
+  assert(g.DEF.port.power[1]>g.DEF.light_industry.power[1]*3);assert(g.DEF.port.water[1]>g.DEF.light_industry.water[1]*3);
+ }
+});
+test('Cargo ships remain on the river, hide at bridges, and cap their count at five per port',()=>{
+ const s=reset();for(let z=0;z<36;z++)s.river[g.idx(20,z)]=true;const port={type:'port',level:5,anchor:g.idx(19,10)};const path=g.riverShippingPath();assert.equal(path.length,36);
+ const bridge=g.idx(20,18);s.grid[bridge]={type:'road',level:1,anchor:bridge,cells:[bridge]};let hidden=false,visibleBefore=false,visibleAfter=false;
+ for(let clock=0;clock<360;clock++){const p=g.cargoShipPose(port,0,clock);assert(p);assert.equal(Math.round(p.x+17.5),20);if(p.hidden)hidden=true;else if(p.z<.5)visibleBefore=true;else visibleAfter=true;}
+ assert(hidden&&visibleBefore&&visibleAfter);assert.equal(g.cargoShipPose(port,5),null);assert.equal(g.cargoShipPose({...port,level:1},1),null);
+});
+test('Theater and opera use real network coverage, grace and a 30 percent terrain advantage',()=>{
+ const s=reset();s.debug=true;add(8,8,'road');const home=add(8,9,'residential',3,120);add(10,8,'road');const theater=add(10,9,'theater');s.debug=false;
+ assert.equal(g.localServices([home],g.uniqueBuildings(),0,1,1).entertainment,0);add(9,8,'road');assert(g.localServices([home],g.uniqueBuildings(),0,1,1).entertainment>0);
+ for(let level=1;level<=4;level++)assert(Math.abs(g.DEF.opera.coverage[level]/4/g.DEF.theater.coverage[level]-1.3)<.0001);
+ assert.equal(g.influenceRadius({...theater,level:2}),g.influenceRadius(theater)+.5);
+ s.unlockAt.theater=s.day;assert.equal(g.serviceDelta('entertainment',0),0);assert(g.serviceDelta('entertainment',100)>0);s.day+=25;assert(g.serviceDelta('entertainment',0)<0);
+ g.setLayer('entertainment');assert.equal(s.layer,'entertainment');assert(!nodes.get('#layerLegend').innerHTML.includes('legendHint'));assert(!nodes.get('#layerLegend').innerHTML.includes('legendNumbers'));
+});
+test('Residential factors sum to satisfaction and commerce provides no proximity bonus',()=>{
+ const s=reset();add(8,8,'road');const home=add(8,9,'residential',3,40);add(9,8,'road');const shop=add(9,9,'commercial');g.calc();
+ const without=g.localResidentialSatisfaction(home,[home],64),withShop=g.localResidentialSatisfaction(home,[home,shop],64);assert.equal(withShop,without);
+ const d=home.satisfactionBreakdown,sum=Object.values(d.factors).reduce((a,b)=>a+b,0)+Object.values(d.servicePoints).reduce((a,b)=>a+b,0);assert(Math.abs(sum-withShop)<1e-8);
+ const details=g.satisfactionDetails(home);assert(details.includes('Impuestos')||s.tax<=10);assert(details.includes('Educación'));assert(!details.includes('local'));assert(!details.includes('Base, entorno y límites'));
+ assert.equal(g.nuisanceRadius({type:'commercial',level:6}),0);assert(g.nuisanceRadius({type:'coal',level:1})>0);assert(g.captureInfluence({type:'coal',level:1,anchor:home.anchor,w:2,h:1}).length>40);
+});
+test('New facility geometry stays in bounds, upgrades visibly and uses neutral layer colors',()=>{
+ reset();for(const type of ['wind','port','theater','opera']){let previous='';for(let level=1;level<=g.DEF[type].max;level++)for(let rot=0;rot<4;rot++){
+  const fp=g.footprint(type,rot,level),parts=g.capture({type,level,rot,palette:0}),data=g.vertexDataForParts(parts);
+  for(let i=0;i<data.length;i+=12){assert(Number.isFinite(data[i+1]));assert(Math.abs(data[i])<=fp.w/2+.021,type+' x');assert(Math.abs(data[i+2])<=fp.h/2+.021,type+' z');}
+  if(rot===0){assert.notEqual(JSON.stringify(parts),previous,type+' upgrade');previous=JSON.stringify(parts);}
+ }
+ g.getState().layer='pollution';const parts=g.captureLayer({type,level:2,rot:0,palette:0});assert.equal(new Set(parts.map(p=>p.col)).size,1,type);g.getState().layer='none';}
+});
+test('Walking is road-only, cannot jump or cross gaps, uses x1 and restores the previous view speed',()=>{
+ const s=reset();assert.equal(g.beginVisit(),false);for(let x=8;x<14;x++)add(x,10,'road');s.selected=g.idx(10,10);g.setSpeed(3);assert(g.beginVisit());assert.equal(g.getSpeed(),1);assert.equal(g.WALK_SPEED,g.CAR_MAX_SPEED*.8);
+ const w=g.getWalk(),start=w.x;w.yaw=Math.PI/2;w.keys.add('w');g.updateVisit(1);assert(Math.abs(w.x-start-g.WALK_SPEED)<1e-8);assert(g.walkablePoint(w.x,w.z));
+ g.updateVisit(30);assert(g.walkablePoint(w.x,w.z));assert(w.x<14-18);const z=w.z;w.keys.clear();w.keys.add(' ');g.updateVisit(1);assert.equal(w.z,z);g.updateCamera();assert.equal(g.getEye()[1],.21);
+ g.endVisit();assert.equal(g.getWalk(),null);assert.equal(g.getSpeed(),3);assert(nodes.get('#leaveVisit').hidden);
+});
+test('Walking collision also applies to touch movement and exits on bankruptcy',()=>{
+ const s=reset();add(8,8,'road');s.selected=g.idx(8,8);g.beginVisit();
+ const event={pointerId:1,pointerType:'touch',button:0,clientX:100,clientY:100,preventDefault(){}};g.visitPointerDown(event);g.visitPointerMove({...event,clientY:40});assert.equal(g.getWalk().touchForward,1);g.updateVisit(10);assert(g.walkablePoint(g.getWalk().x,g.getWalk().z));g.visitPointerUp(event);assert.equal(g.getWalk().touchForward,0);
+ s.money=-1;g.renderEmergency();assert.equal(g.getWalk(),null);assert.equal(g.getSpeed(),0);
+});
 
 test('Solar starts at N3 and gains one upgrade at each city level',()=>{
  const s=reset();for(let city=4;city<=8;city++){s.cityLevel=city;assert.equal(g.maxAllowedLevel('solar'),city<5?0:city-2);}assert.equal(g.DEF.solar.max,6);assert(g.DEF.solar.powerCap[6]>g.DEF.solar.powerCap[5]);
@@ -35,7 +101,7 @@ test('School, health, police and fire require the same road network; reconnectin
  }
 });
 test('Grace preserves real coverage and removes only negative service contributions',()=>{
- const s=reset();s.day=100;for(const type of ['school','clinic','police','fire'])s.unlockAt[type]=100;
+ const s=reset();s.day=100;for(const type of ['school','clinic','police','fire','theater'])s.unlockAt[type]=100;
  add(8,8,'road');const home=add(8,9,'residential',1,12),values=g.localServices([home],g.uniqueBuildings(),0,1,1);
  for(const kind of ['education','health','security','fire'])assert.equal(values[kind],0);
  assert.equal(g.serviceContribution(values),0);assert(g.serviceContribution({...values,health:100})>0);
@@ -94,7 +160,7 @@ test('Ticker stays active after exhausting history and uses news for existing bu
   reset();const base=JSON.parse(JSON.stringify(g.citySnapshot()));
   for(const [type,def] of Object.entries(g.DEF))for(let rot=0;rot<4;rot++){
    const fp=g.footprint(type,rot,def.max),building={type,level:def.max,anchor:g.idx(8,8),rot,w:fp.w,h:fp.h,occ:0,fire:0,palette:0,baseLevel:8};
-   const save={...base,river:base.river.slice(),buildings:[building]};if(type==='wastewater')save.river[building.anchor-1]=true;
+   const save={...base,river:base.river.slice(),buildings:[building]};if(type==='wastewater')save.river[building.anchor-1]=true;if(type==='port'){const {x,z}=g.coord(building.anchor);for(let k=0;k<3;k++){const [xx,zz]=rot===0?[x+1,z+k]:rot===1?[x+k,z-1]:rot===2?[x-1,z+k]:[x+k,z+1];save.river[g.idx(xx,zz)]=true;}}
    const valid=validateCity(save);assert.equal(valid.buildings[0].level,def.max,type);assert.throws(()=>validateCity({...save,buildings:[{...building,level:def.max+1}]}),type);
    g.restoreCity(JSON.parse(JSON.stringify(valid)));assert.equal(g.uniqueBuildings()[0].type,type);assert.equal(g.uniqueBuildings()[0].cells.length,fp.w*fp.h,type);
   }
@@ -153,7 +219,7 @@ test('Emergency loan respects bankruptcy, term, city cap and single outstanding 
  const s=reset();s.cityLevel=3;s.money=1;assert(!g.takeLoan(10000,1.5));s.money=0;assert(!g.takeLoan(g.loanLimit()+1,3));assert(!g.takeLoan(10000,4));assert(g.takeLoan(10000,1.5));assert(!g.takeLoan(10,3));const payment=g.loanHourly();assert.equal(s.money,10000);assert.equal(s.loan.total,10600);g.advance(1);assert(Math.abs(s.loan.remaining-(10600-payment))<.0001);assert(Math.abs(s.money-(10000-payment))<.0001);g.advance(1.5*30*24);assert.equal(s.loan,null);assert(Math.abs(s.money+600)<.0001);assert(g.loanTerms(10000,12).interest>g.loanTerms(10000,3).interest);
 });
 test('Research is fixed capacity, gates building, never accumulates and shortages reduce output',()=>{
- const s=reset();s.cityLevel=5;for(let x=4;x<14;x++)add(x,8,'road');add(4,9,'residential',8,500);add(9,9,'coal',3);add(7,9,'water',3);const lab=add(8,9,'research',3);g.calc();assert(s.researchCap>0);const cap=s.researchCap;g.advance(.1);assert.equal(s.researchPoints,0);assert(!g.buildingLocked('solar'));s.manualRotation=0;g.build(g.idx(12,9),'solar');const plant=s.grid[g.idx(12,9)];assert(plant);g.calc();assert(s.researchUse>0);g.openPopup(lab.anchor);g.demolishSelected();g.calc();assert.equal(s.researchCap,0);assert.equal(plant.researchEfficiency,0);assert(g.buildingLocked('solar'));s.researchPoints=10000;g.calc();assert.equal(s.researchPoints,0);assert(g.buildingLocked('solar'));
+ const s=reset();s.cityLevel=5;for(let x=4;x<14;x++)add(x,8,'road');add(4,9,'residential',8,500);add(9,9,'coal',3);add(7,9,'water',3);s.debug=true;const lab=add(8,9,'research',3);s.debug=false;g.calc();assert(s.researchCap>0);const cap=s.researchCap;g.advance(.1);assert.equal(s.researchPoints,0);assert(!g.buildingLocked('solar'));s.manualRotation=0;g.build(g.idx(12,9),'solar');const plant=s.grid[g.idx(12,9)];assert(plant);g.calc();assert(s.researchUse>0);g.openPopup(lab.anchor);g.demolishSelected();g.calc();assert.equal(s.researchCap,0);assert.equal(plant.researchEfficiency,0);assert(g.buildingLocked('solar'));s.researchPoints=10000;g.calc();assert.equal(s.researchPoints,0);assert(g.buildingLocked('solar'));
 });
 test('Normal time is capped at x3 and debug settings survive save/load',()=>{const s=reset();g.setSpeed(1);assert.equal(g.simulationRate(),.175);g.setSpeed(3);assert(Math.abs(g.simulationRate()-.525)<1e-10);const snapshot=g.citySnapshot();snapshot.debug=true;g.restoreCity(snapshot);assert.equal(g.getState().debug,true);g.setSpeed(0);});
 test('Starter budget reaches the first promotion with only level-one unlocks',()=>{const s=g.newState();s.river.fill(false);g.setState(s);for(let x=16;x<=20;x++)add(x,18,'road');add(16,17,'water');add(17,17,'commercial');add(18,17,'commercial');for(const x of [16,17,18,19,20])add(x,19,'residential');assert(s.money>=0);for(let n=0;n<2000&&s.cityLevel<2;n++)g.advance(.25);assert(s.cityLevel>=2,`stalled ${s.pop}/${s.happiness}`);assert(s.money>0);});
@@ -267,9 +333,9 @@ test('News alternates queued facts with satire and never repeats after save and 
  const s=reset();doc.querySelector('#cityAccess').hidden=true;doc.querySelector('#startScreen').hidden=true;g.addEvent('Hito A');g.addEvent('Hito B');assert.equal(s.newsSeen[0],'Hito A');g.presentNextNews();assert(s.newsSeen[1]!==s.newsSeen[0]);g.presentNextNews();assert.equal(s.newsSeen[2],'Hito B');g.addEvent('Hito A');assert(!s.newsQueue.some(n=>n.text==='Hito A'));
  const seen=[...s.newsSeen];g.restoreCity(JSON.parse(JSON.stringify(g.citySnapshot())));g.addEvent('Hito A');assert.equal(g.getState().newsSeen.filter(t=>t==='Hito A').length,1);assert(seen.every(t=>g.getState().newsSeen.includes(t)));
 });
-test('Monuments have three bounded models, cost 25000 and provide one wellbeing point',()=>{
- const s=reset();s.cityLevel=5;assert(g.buildingLocked('monument'));s.cityLevel=6;assert(!g.buildingLocked('monument'));assert.equal(g.buildPrice('monument'),25000);assert.equal(g.DEF.monument.happiness[1],1);
- add(8,8,'road');const h=add(8,9,'residential',1,12);add(9,8,'road');const cash=s.money,m=add(9,9,'monument');assert.equal(cash-s.money,25000);assert.equal(m.cells.length,1);g.calc();const base=g.localResidentialSatisfaction(h,[h],50),boost=g.localResidentialSatisfaction(h,[h,m],50)-base;assert(Math.abs(boost-g.DEF.monument.happiness[1]*1.25*(1-1/5.2))<1e-8);assert.equal(m.netPollution,0);assert.equal(m.netIncome,0);
+test('Monuments have three bounded models, cost 75000 and provide one wellbeing point',()=>{
+ const s=reset();s.cityLevel=5;assert(g.buildingLocked('monument'));s.cityLevel=6;s.goodsByComponent={0:{capacity:100,demand:0}};assert(!g.buildingLocked('monument'));assert.equal(g.buildPrice('monument'),75000);assert.equal(g.DEF.monument.happiness[1],1);
+ add(8,8,'road');const h=add(8,9,'residential',1,12);add(9,8,'road');s.goodsByComponent={0:{capacity:100,demand:0}};const cash=s.money,m=add(9,9,'monument');assert.equal(cash-s.money,75000);assert.equal(m.cells.length,1);g.calc();const base=g.localResidentialSatisfaction(h,[h],50),boost=g.localResidentialSatisfaction(h,[h,m],50)-base;assert(Math.abs(boost-g.DEF.monument.happiness[1]*g.goodsFactor(m)*1.25*(1-1/5.2))<1e-8);assert.equal(m.netPollution,0);assert.equal(m.netIncome,0);
  const counts=[];for(let palette=0;palette<3;palette++){const parts=g.capture({type:'monument',level:1,palette,rot:0});counts.push(parts.length);for(const part of parts){assert(Math.abs(part.x)+part.sx/2<=.5);assert(Math.abs(part.z)+part.sz/2<=.5);}}assert.equal(new Set(counts).size,3);
  const save=g.citySnapshot();g.restoreCity(JSON.parse(JSON.stringify(save)));assert.equal(g.getState().grid[m.anchor].palette,m.palette);
 });

@@ -10,6 +10,18 @@ async function call(route,method='GET',data,session='',extra={}){const r=await h
 let a,b;
 const state={format:1,width:30,height:24,mapSeed:12,money:8500,day:8,tax:10,cityLevel:1,diseaseDays:0,crimeDays:0,alerts:0,debug:false,landUnlocked:Array(720).fill(true),river:Array(720).fill(false),unlockAt:{road:0},buildings:[]};
 test('Register independent accounts and issue protected cookies; hashes are salted',async()=>{a=await call('register','POST',{username:'Prueba_A',password:'contraseña-A-123'});b=await call('register','POST',{username:'Prueba_B',password:'contraseña-A-123'});assert.equal(a.status,200);assert.match(a.cookie,/HttpOnly; Secure; SameSite=Strict/);a.cookie=a.cookie.split(';')[0];b.cookie=b.cookie.split(';')[0];const accounts=sqlite.prepare('SELECT * FROM city_accounts').all();assert.notEqual(accounts[0].password_hash,accounts[1].password_hash);assert(!JSON.stringify(accounts).includes('contraseña'));assert.equal((await call('register','POST',{username:'prueba_a',password:'another-secret'})).status,409);});
+
+test('Ports enforce full river frontage and new facilities retain maximum levels and wind research',()=>{
+ const city={...state,format:4,width:36,height:36,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),technologies:['solar','wastewater','university','hospital','nuclear','wind']};
+ for(let rot=0;rot<4;rot++){
+  const x=12,z=12,river=city.river.slice(),shore=Array.from({length:3},(_,k)=>rot===0?[x+1,z+k]:rot===1?[x+k,z-1]:rot===2?[x-1,z+k]:[x+k,z+1]);shore.forEach(([xx,zz])=>river[zz*36+xx]=true);
+  const port={type:'port',level:5,anchor:z*36+x,rot,w:rot%2?3:1,h:rot%2?1:3,occ:0,fire:0,palette:0};
+  const saved=validateCity({...city,river,buildings:[port]});assert.equal(saved.buildings[0].level,5);assert(saved.technologies.includes('wind'));
+  river[shore[1][1]*36+shore[1][0]]=false;assert.throws(()=>validateCity({...city,river,buildings:[port]}));assert.throws(()=>validateCity({...city,river,buildings:[{...port,legacyFootprint:true}]}));
+ }
+ for(const [type,level,w,h] of [['wind',5,1,1],['theater',5,1,1],['opera',4,2,2]]){const b={type,level,w,h,anchor:300,rot:0,occ:0,fire:0,palette:0};assert.equal(validateCity({...city,buildings:[b]}).buildings[0].type,type);assert.throws(()=>validateCity({...city,buildings:[{...b,level:level+1}]}));}
+});
+
 test('Solar N6 saves and reloads through the authenticated API; N7 is rejected',async()=>{
  const city={...state,format:4,width:36,height:36,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[{type:'solar',level:6,w:1,h:2,anchor:200,rot:0,palette:0,occ:0,fire:0}]};
  const put=await call('city','PUT',{version:0,state:city},b.cookie);assert.equal(put.status,200);assert.equal((await call('city','GET',undefined,b.cookie)).body.state.buildings[0].level,6);
