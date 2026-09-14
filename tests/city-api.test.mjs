@@ -81,3 +81,23 @@ test('Monuments and tutorial/news history survive validation; malformed history 
  const saved=validateCity(city);assert.equal(saved.buildings[0].type,'monument');assert.equal(saved.tutorialStep,2);assert.deepEqual(saved.newsSeen,city.newsSeen);assert.deepEqual(saved.adviceSeen,city.adviceSeen);
  for(const changes of [{tutorialStep:7},{newsSeen:['x'.repeat(301)]},{adviceSeen:['invalid']},{buildings:[{...city.buildings[0],w:2}]}])assert.throws(()=>validateCity({...city,...changes}));
 });
+
+test('Municipality persists policy, activation history, linked roads and all eight hall levels',()=>{
+ for(let level=1;level<=8;level++){
+ const hall={type:'townhall',level,anchor:100,rot:0,w:1,h:2,occ:0,fire:0,palette:0},road={type:'road',level:1,anchor:172,rot:0,w:1,h:1,occ:0,fire:0,palette:0};
+ const city={...state,format:4,width:36,height:36,cityLevel:level,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[hall,road],municipalVersion:1,civicRoad:172,ordinance:level>=2?'housing':null,ordinanceEverActivated:level>=2,adviceSeen:level>=2?['townhall']:[]};
+ const saved=validateCity(city);assert.equal(saved.ordinance,city.ordinance);assert.equal(saved.ordinanceEverActivated,city.ordinanceEverActivated);assert.equal(saved.civicRoad,172);
+ assert.throws(()=>validateCity({...city,buildings:[{...hall,level:level===8?7:8},road]}));
+ assert.throws(()=>validateCity({...city,buildings:[hall,road,{...road,anchor:400}]}));
+ assert.throws(()=>validateCity({...city,buildings:[hall],civicRoad:172}));
+ assert.throws(()=>validateCity({...city,ordinance:'invented'}));
+ assert.throws(()=>validateCity({...city,ordinance:'housing',ordinanceEverActivated:false}));
+ if(level<8)assert.throws(()=>validateCity({...city,ordinance:'global',ordinanceEverActivated:true}));
+ const disabled=validateCity({...city,ordinance:null,ordinanceEverActivated:true});assert(disabled.ordinanceEverActivated);
+ }
+});
+test('Legacy saves remain valid without municipal fields and intensive occupancy survives',()=>{
+ const legacy=validateCity({...state});assert.equal(legacy.ordinance,null);assert.equal(legacy.municipalVersion,0);
+ const city={...state,format:4,width:36,height:36,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),ordinance:'intensive',ordinanceEverActivated:true,buildings:[{type:'residential',level:8,anchor:100,rot:0,w:1,h:1,palette:0,occ:896,fire:0}]};
+ assert.equal(validateCity(city).buildings[0].occ,896);assert.throws(()=>validateCity({...city,buildings:[{...city.buildings[0],occ:897}]}));
+});
