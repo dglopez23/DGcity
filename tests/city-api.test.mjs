@@ -9,6 +9,13 @@ const origin='https://juegos-dglopez.dglopez.chatgpt.site';
 async function call(route,method='GET',data,session='',extra={}){const r=await handleCityAPI(new Request(origin+'/api/ciudad-viva/'+route,{method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:session,'cf-connecting-ip':'192.0.2.10',...extra},body:data===undefined?undefined:JSON.stringify(data)}),db);return {status:r.status,body:await r.json(),cookie:r.headers.get('set-cookie'),headers:r.headers};}
 let a,b;
 const state={format:1,width:30,height:24,mapSeed:12,money:8500,day:8,tax:10,cityLevel:1,diseaseDays:0,crimeDays:0,alerts:0,debug:false,landUnlocked:Array(720).fill(true),river:Array(720).fill(false),unlockAt:{road:0},buildings:[]};
+test('Residential trees persist, default safely for old saves and reject invalid attributes',()=>{
+ const home={type:'residential',level:1,w:1,h:1,rot:0,anchor:200,palette:0,occ:0,fire:0};
+ for(const yardTree of [true,false])assert.equal(validateCity({...state,buildings:[{...home,yardTree}]}).buildings[0].yardTree,yardTree);
+ assert.equal(validateCity({...state,buildings:[home]}).buildings[0].yardTree,false);
+ for(const yardTree of [1,'true',null])assert.throws(()=>validateCity({...state,buildings:[{...home,yardTree}]}));
+ assert.throws(()=>validateCity({...state,buildings:[{...home,type:'commercial',yardTree:true}]}));
+});
 test('Register independent accounts and issue protected cookies; hashes are salted',async()=>{a=await call('register','POST',{username:'Prueba_A',password:'contraseña-A-123'});b=await call('register','POST',{username:'Prueba_B',password:'contraseña-A-123'});assert.equal(a.status,200);assert.match(a.cookie,/HttpOnly; Secure; SameSite=Strict/);a.cookie=a.cookie.split(';')[0];b.cookie=b.cookie.split(';')[0];const accounts=sqlite.prepare('SELECT * FROM city_accounts').all();assert.notEqual(accounts[0].password_hash,accounts[1].password_hash);assert(!JSON.stringify(accounts).includes('contraseña'));assert.equal((await call('register','POST',{username:'prueba_a',password:'another-secret'})).status,409);});
 
 test('Ports accept two water cells and new facilities retain maximum levels and wind research',()=>{
