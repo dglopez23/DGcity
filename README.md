@@ -32,4 +32,16 @@ Pantalla de inicio con controles básicos, barra superior compacta y Registro Ur
 
 El mapa tiene 36×36 casillas. Las partidas de 30×24 y 36×24 se amplían conservando edificios y terreno; las casillas nuevas permanecen bloqueadas. Universidad 2×2, intercambiador 1×2 rotatorio y depuradoras junto a un río; las construcciones antiguas conservan su superficie hasta ampliarlas o trasladarlas. Los parques buscan espacio de expansión en todas las direcciones.
 
-Capital inicial: 9.500 €. Los costes de construcción y mejora son propios de cada edificio y no aumentan por el nivel de ciudad. La cobertura integra capacidad y demanda de los servicios en una sola métrica; las depuradoras requieren investigación. Controles de pausa, velocidad normal y triple; tras 15 minutos sin actividad la simulación se pausa automáticamente. Música y efectos tienen controles independientes y los parques llegan a N8.
+Capital inicial: 15.000 €. Los costes de construcción y mejora son propios de cada edificio y no aumentan por el nivel de ciudad. La cobertura integra capacidad y demanda de los servicios en una sola métrica; las depuradoras requieren investigación. Controles de pausa, velocidad normal y triple; tras 15 minutos sin actividad la simulación se pausa automáticamente. Música y efectos tienen controles independientes y los parques llegan a N8.
+
+## Inventario, paseo y meteorología
+
+El botón de caja permite guardar hasta 256 edificios y volver a colocarlos sin coste, conservando nivel y apariencia. Mientras están guardados no producen ni consumen; las viviendas se vacían. No se pueden guardar carreteras, el Ayuntamiento ni edificios en llamas. El inventario se conserva en el servidor.
+
+Para pasear, arrastra el muñeco hasta una carretera. En PC, clic o Esc libera el cursor; otro clic en el mapa vuelve a capturarlo. Con el cursor libre la vista no gira. En móvil se usa el joystick y el arrastre para mirar. El botón superior termina el paseo.
+
+Cada nuevo día se sortea un 5% de lluvia, con un 20% de inundación si llueve. La lluvia dura 24 horas; la inundación dura entre 24 y 72 horas según los bomberos operativos, su plantilla y suministros al iniciarse. Durante ella: ingresos de negocios −20%, producción industrial −15%, velocidad de vehículos −30% y satisfacción −8 puntos; no se puede pasear. Agua, lluvia y cielo cambian visualmente y los plazos se conservan al guardar.
+
+Los parques aportan entretenimiento. Debug llena viviendas y plantillas, reanuda el tiempo al activarse y conserva los controles de velocidad. Las cifras visibles tienen como máximo dos decimales.
+
+Las pruebas automatizadas cubren lógica, guardado e interacción simulada de PC y móvil. No sustituyen la comprobación visual ni la captura real del cursor en cada navegador.
