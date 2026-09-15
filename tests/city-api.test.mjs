@@ -9,6 +9,25 @@ const origin='https://juegos-dglopez.dglopez.chatgpt.site';
 async function call(route,method='GET',data,session='',extra={}){const r=await handleCityAPI(new Request(origin+'/api/ciudad-viva/'+route,{method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:session,'cf-connecting-ip':'192.0.2.10',...extra},body:data===undefined?undefined:JSON.stringify(data)}),db);return {status:r.status,body:await r.json(),cookie:r.headers.get('set-cookie'),headers:r.headers};}
 let a,b;
 const state={format:1,width:30,height:24,mapSeed:12,money:8500,day:8,tax:10,cityLevel:1,diseaseDays:0,crimeDays:0,alerts:0,debug:false,landUnlocked:Array(720).fill(true),river:Array(720).fill(false),unlockAt:{road:0},buildings:[]};
+
+test('Inventory and weather validate independently of city occupancy and survive JSON round trips',()=>{
+ const city={...state,format:4,width:36,height:36,day:121,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[],inventory:[],weather:{checkedDay:5,rainUntil:144,floodStart:120,floodUntil:192}};
+ for(const [type,level,w,h] of [['residential',8,1,1],['solar',6,1,2],['solar_complex',6,2,2],['nuclear',3,2,2],['light_industrial_complex',5,2,1],['port',5,1,3],['wastewater',5,1,2]]){
+  city.inventory.push({type,level,w,h,anchor:200,rot:0,occ:0,fire:0,palette:54,...(type==='residential'?{yardTree:true}:{})});
+ }
+ city.inventory.push({type:'park',level:8,w:6,h:3,parkLevels:[7,8],anchor:200,rot:0,occ:0,fire:0,palette:4});
+ const saved=validateCity(city);assert.equal(saved.inventory.length,8);assert.equal(saved.inventory[0].yardTree,true);assert.deepEqual(saved.weather,city.weather);assert.equal(saved.buildings.length,0);
+ assert.deepEqual(validateCity(JSON.parse(JSON.stringify(saved))),saved);
+ for(const patch of [{type:'road'},{type:'townhall'},{occ:1},{fire:1},{level:100},{w:8},{palette:Infinity}]){
+  assert.throws(()=>validateCity({...city,inventory:[{...city.inventory[0],...patch}]}));
+ }
+ assert.throws(()=>validateCity({...city,inventory:Array(257).fill(city.inventory[0])}));
+ for(const patch of [{checkedDay:6},{checkedDay:.5},{rainUntil:146},{floodStart:122},{floodUntil:300},{floodUntil:130},{floodUntil:0},{floodStart:NaN}]){
+  assert.throws(()=>validateCity({...city,weather:{...city.weather,...patch}}));
+ }
+ assert.deepEqual(validateCity(state).inventory,[]);assert.equal(validateCity(state).weather.checkedDay,0);
+});
+
 test('Residential trees persist, default safely for old saves and reject invalid attributes',()=>{
  const home={type:'residential',level:1,w:1,h:1,rot:0,anchor:200,palette:0,occ:0,fire:0};
  for(const yardTree of [true,false])assert.equal(validateCity({...state,buildings:[{...home,yardTree}]}).buildings[0].yardTree,yardTree);

@@ -14,16 +14,41 @@ function harness(mobile=true,width=390,height=844){
  }
  const document={body:node('body'),hidden:false,querySelector(s){if(!nodes.has(s)){const n=node();if(s.startsWith('#'))n.id=s.slice(1);nodes.set(s,n);}return nodes.get(s)},querySelectorAll(){return[]},createElement:node,addEventListener(){}};
  const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:()=>({})},{get:(o,k)=>o[k]||(()=>({}))});document.querySelector('#glCanvas').getContext=()=>gl;
- const window={innerWidth:width,innerHeight:height,addEventListener(){},matchMedia:q=>({matches:mobile&&q.includes('pointer: coarse')})};
+ const eventBus=node();const window={innerWidth:width,innerHeight:height,addEventListener:eventBus.addEventListener,emit:eventBus.emit,matchMedia:q=>({matches:mobile&&q.includes('pointer: coarse')})};
  const ctx={window,document,navigator:{userAgent:mobile?'Mozilla/5.0 iPhone':'Windows NT',maxTouchPoints:mobile?5:0},console,Math,performance:{now:()=>1000},requestAnimationFrame(){},setTimeout(){},clearTimeout(){},setInterval(){},fetch:()=>new Promise(()=>{}),AbortSignal,Float32Array,Uint16Array,devicePixelRatio:3,testGame:{}};
- const expose=`Object.assign(testGame,{MOBILE,detectMobile,mobile,resetMobileGesture,mobilePointerDown,mobilePointerMove,mobilePointerUp,confirmMobilePlacement,mobileClosePanels,syncMobile,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,build,citySnapshot,restoreCity,renderUI,renderPalette,toggleAnalysis,openMunicipality,renderCityGuide,renderMobileJournal,getState:()=>S,getWalk:()=>walk,getCamera:()=>cam,projectPoint,worldFromCell,coord,idx,uniqueBuildings,resizeCanvas,getDrawSize:()=>[canvas.width,canvas.height]});})();`;
+ const expose=`Object.assign(testGame,{visitDragMove,finishVisitDrag,getVisitDrag:()=>visitDrag,toggleInventory,takeInventory,cancelAction,storeBuilding,visitPointerMove,MOBILE,detectMobile,mobile,resetMobileGesture,mobilePointerDown,mobilePointerMove,mobilePointerUp,confirmMobilePlacement,mobileClosePanels,syncMobile,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,build,citySnapshot,restoreCity,renderUI,renderPalette,toggleAnalysis,openMunicipality,renderCityGuide,renderMobileJournal,getState:()=>S,getWalk:()=>walk,getCamera:()=>cam,projectPoint,worldFromCell,coord,idx,uniqueBuildings,resizeCanvas,getDrawSize:()=>[canvas.width,canvas.height]});})();`;
  vm.createContext(ctx);vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/\}\)\(\);\s*$/,expose),ctx);
- const g=ctx.testGame,s=g.getState();s.debug=true;s.money=1e8;s.river.fill(false);s.landUnlocked.fill(true);s.tutorialDone=true;g.resizeCanvas();g.updateCamera();return {g,s,nodes,document};
+ const g=ctx.testGame,s=g.getState();s.debug=true;s.money=1e8;s.river.fill(false);s.landUnlocked.fill(true);s.tutorialDone=true;g.resizeCanvas();g.updateCamera();return {g,s,nodes,document,window};
 }
 function pointer(id,x,y){return {pointerId:id,clientX:x,clientY:y,pointerType:'touch',button:0,preventDefault(){}};}
 function point(g,x,z){const w=g.worldFromCell(x,z);g.updateCamera();return g.projectPoint(w.x,0,w.z);}
 function tap(g,x,z,id=1){const p=point(g,x,z),e=pointer(id,p.x,p.y);g.mobilePointerDown(e);g.mobilePointerUp(e);}
 const cases=[];function test(name,fn){fn();cases.push(name);console.log('PASS',name)}
+
+test('Visit starts only after dragging onto a road, including touch and flood rejection',()=>{
+ for(const mobile of [true,false]){
+  const {g,s,nodes,window}=harness(mobile);s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'road');const p=point(g,18,18),btn=nodes.get('#visitBtn');
+  const start={...pointer(9,20,100),pointerType:mobile?'touch':'mouse',stopPropagation(){}};
+  btn.emit('pointerdown',start);assert(g.getVisitDrag());assert(!g.getWalk());
+  window.emit('pointermove',{...pointer(9,p.x,p.y),pointerType:start.pointerType});assert.equal(g.getVisitDrag().cell,g.idx(18,18));
+  window.emit('pointerup',{...pointer(9,p.x,p.y),pointerType:start.pointerType});assert(g.getWalk());assert.equal(g.getVisitDrag(),null);assert(nodes.get('#visitDropGhost').hidden);g.endVisit();
+  btn.emit('pointerdown',start);window.emit('pointermove',pointer(9,-20,-20));window.emit('pointerup',pointer(9,-20,-20));assert(!g.getWalk());
+  s.weather={checkedDay:0,rainUntil:24,floodStart:0,floodUntil:72};btn.emit('pointerdown',start);assert.equal(g.getVisitDrag(),null);assert(!g.getWalk());
+ }
+});
+test('Mobile inventory uses map taps, safe cancellation and confirmation before restoring',()=>{
+ const {g,s,nodes}=harness();s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'residential');g.toggleInventory();assert(nodes.get('#inventoryDrawer').classList.contains('open'));
+ tap(g,18,18);assert.equal(s.inventory.length,1);assert.equal(s.grid[g.idx(18,18)],null);
+ g.takeInventory(0);tap(g,19,18);assert.equal(s.inventory.length,1);assert.equal(s.grid[g.idx(19,18)],null);g.confirmMobilePlacement();assert.equal(s.inventory.length,0);assert.equal(s.grid[g.idx(19,18)].type,'residential');
+ g.toggleInventory();tap(g,19,18);g.takeInventory(0);g.cancelAction();assert.equal(s.inventory.length,1);
+});
+test('Desktop free cursor does not rotate the walking camera',()=>{
+ const {g,s,nodes,document}=harness(false);s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'road');g.beginVisit(g.idx(18,18));const walk=g.getWalk(),yaw=walk.yaw;
+ g.visitPointerMove({pointerType:'mouse',movementX:90,movementY:20});assert.equal(walk.yaw,yaw);
+ document.pointerLockElement=nodes.get('#glCanvas');g.visitPointerMove({pointerType:'mouse',movementX:90,movementY:20});assert.notEqual(walk.yaw,yaw);
+ document.pointerLockElement=null;const lockedYaw=walk.yaw;g.visitPointerMove({pointerType:'mouse',movementX:90,movementY:20});assert.equal(walk.yaw,lockedYaw);g.endVisit();
+});
+
 test('Mobile detection keeps desktop opt-out and recognizes phones and iPad desktop user agents',()=>{
  const {g}=harness(false);assert.equal(g.MOBILE,false);assert.equal(g.detectMobile({userAgent:'iPhone'}),true);assert.equal(g.detectMobile({platform:'MacIntel',maxTouchPoints:5}),true);assert.equal(g.detectMobile({platform:'Win32',maxTouchPoints:0},()=>({matches:false})),false);
 });
