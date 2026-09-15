@@ -8,6 +8,6 @@
   },
   "scripts": {
     "start": "node server/local.mjs",
-    "test": "node tests/city-game.cjs && node --test tests/city-api.test.mjs"
+    "test": "node tests/city-game.cjs && node tests/city-mobile.cjs && node --test tests/city-api.test.mjs"
   }
 }
