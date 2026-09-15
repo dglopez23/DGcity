@@ -12,7 +12,7 @@ mkdirSync(resolve(root,'data'),{recursive:true});
 const sqlite=new DatabaseSync(resolve(root,'data/city.sqlite'));sqlite.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;');
 if(!sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='city_accounts'").get())sqlite.exec(readFileSync(resolve(root,'drizzle/0008_illegal_crusher_hogan.sql'),'utf8'));
 const db={prepare(sql){return {bind(...args){const q=sqlite.prepare(sql);return {async first(){return q.get(...args)||null},async run(){return q.run(...args)}}}}},async batch(q){sqlite.exec('BEGIN');try{const r=await Promise.all(q.map(x=>x.run()));sqlite.exec('COMMIT');return r}catch(e){sqlite.exec('ROLLBACK');throw e}}};
-const publicRoot=resolve(root,'public'),types={'.html':'text/html; charset=utf-8','.ogg':'audio/ogg','.mp3':'audio/mpeg','.svg':'image/svg+xml','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
+const publicRoot=resolve(root,'public'),types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.ogg':'audio/ogg','.mp3':'audio/mpeg','.svg':'image/svg+xml','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
 const server=createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,origin).pathname;

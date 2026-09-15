@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Ciudad Viva: juego de construir ciudades 3D gratis | DGLopez</title>
 <meta name="description" content="Construye y gestiona tu ciudad en 3D gratis: viviendas, carreteras, energía, agua y servicios. Guarda tu partida y continúa con tu cuenta desde otro dispositivo.">
 <link rel="canonical" href="https://juegos-dglopez.dglopez.chatgpt.site/ciudad-viva/">
@@ -264,6 +264,7 @@ input[type="range"]{appearance:none;-webkit-appearance:none;background:transpare
 .hud,.top,.buildDrawer,.side,.layersDrawer,.municipalSheet{filter:saturate(1.1)}
 @media(max-width:900px){.hud{gap:9px!important}.hudCard:last-child{min-width:190px!important}.hudCard{min-width:65px}}@media(max-width:800px){.hud{width:calc(100% - 24px)!important;max-width:620px!important;gap:5px!important}.hudCard:last-child{min-width:0!important}.municipalSheet{max-height:82dvh}}
 </style>
+<link rel="stylesheet" href="mobile.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Ciudad Viva", "url": "https://juegos-dglopez.dglopez.chatgpt.site/ciudad-viva/", "description": "Construye y gestiona tu ciudad en 3D gratis: viviendas, carreteras, energía, agua y servicios. Guarda tu partida y continúa con tu cuenta desde otro dispositivo.", "inLanguage": "es", "genre": ["Simulación", "Estrategia", "Construcción de ciudades"], "gamePlatform": "Navegador web con WebGL", "playMode": "SinglePlayer", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Diego Gálvez López"}}</script>
 </head>
 <body>
@@ -428,6 +429,11 @@ input[type="range"]{appearance:none;-webkit-appearance:none;background:transpare
 <script>
 (()=>{
 "use strict";
+const MOBILE=detectMobile();
+function detectMobile(nav=typeof navigator==='undefined'?{}:navigator,media=window.matchMedia?.bind(window)){
+ return !!(nav.userAgentData?.mobile||/Android|iPhone|iPad|iPod/i.test(nav.userAgent||'')||(nav.platform==='MacIntel'&&nav.maxTouchPoints>1)||(media?.('(pointer: coarse) and (hover: none) and (max-width: 1024px)').matches));
+}
+if(MOBILE)document.body.classList.add('mobile-mode');
 
 /* ---------- Configuración ---------- */
 const W=36,H=36,TILE=1;
@@ -764,7 +770,7 @@ function renderMunicipality(){
  $('#ordinanceList').innerHTML=[{id:null,level:2,name:'Sin ordenanza',benefit:'Sin beneficios ni perjuicios adicionales.',cost:'',icon:'M5 5l14 14M19 5 5 19'},...ORDINANCES].filter(o=>o.level<=S.cityLevel).map(o=>'<article class="ordinanceCard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+o.icon+'"/></svg><div><b>'+o.name+' · N'+o.level+'</b><p>'+o.benefit+'</p><p class="ordinanceCost">'+o.cost+'</p><button class="btn" data-ordinance="'+(o.id||'')+'" '+(S.cityLevel<o.level||S.ordinance===o.id||S.money<fee?'disabled':'')+'>'+(S.ordinance===o.id?'Activa':S.cityLevel<o.level?'Disponible en N'+o.level:'Aplicar · '+euro(fee))+'</button></div></article>').join('');
  $('#taxText').textContent=S.tax+'%';$('#taxInput').value=S.tax;
 }
-function openMunicipality(){migrateMunicipality();syncTownhall();renderMunicipality();$('#municipalModal').hidden=false;$('#municipalClose').focus();}
+function openMunicipality(){if(MOBILE)mobileClosePanels();migrateMunicipality();syncTownhall();renderMunicipality();$('#municipalModal').hidden=false;$('#municipalClose').focus();}
 
 function newState(seed=true){
  const mapSeed=Math.floor(Math.random()*1000000);
@@ -1107,6 +1113,7 @@ function cityNews(buildings){
  if(!S.newsActive||performance.now()-lastNewsAt>=14000)presentNextNews();
 }
 function showNotice(text){
+ if(MOBILE)text=text.replace(/Esc cancela|Esc: cancelar/g,'pulsa Cancelar').replace(/ · Esc/g,'').replace(/R para girar/g,'pulsa Girar').replace(/pulsa R o el botón Girar/g,'pulsa Girar');
   const n=$("#notice");n.textContent=text;n.classList.add("visible");
   clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.classList.remove("visible"),1800);
 }
@@ -1718,7 +1725,7 @@ function renderCityGuide(){
  const visible=!S.debug&&(!S.tutorialDone||tip)&&$('#cityAccess').hidden&&$('#startScreen').hidden&&!S.gameOver&&S.money>=0;
  if(!visible){$('#cityGuide').hidden=true;if(guideTarget)guideTarget.classList.remove('guide-focus');guideTarget=null;return;}
  const step=tip?['#buildDrawerTab',tip[1],tip[2]]:CITY_GUIDE[Math.min(guideStep,CITY_GUIDE.length-1)];
- const note=$('#cityGuide');if($('#guideTitle').textContent!==step[1]&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)note.animate?.([{opacity:0,transform:'translateY(12px) rotate(-2deg)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});note.hidden=false;$('#guideTitle').textContent=step[1];$('#guideText').textContent=step[2];
+ const note=$('#cityGuide');if($('#guideTitle').textContent!==step[1]&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)note.animate?.([{opacity:0,transform:'translateY(12px) rotate(-2deg)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});note.hidden=false;$('#guideTitle').textContent=step[1];$('#guideText').textContent=MOBILE?mobileGuideText(step,tip):step[2];
  const target=$(!tip&&step[3]&&buildDrawerOpen?'#palette [data-type="'+step[3]+'"]':step[0]);if(guideTarget!==target){if(guideTarget)guideTarget.classList.remove('guide-focus');guideTarget=target;target?.classList.add('guide-focus');}
  $('#guideNext').hidden=!tip;$('#guideNext').disabled=!tip&&!guideRequirementMet(step);$('#guideNext').textContent=tip?'Entendido':guideStep===CITY_GUIDE.length-1?'Empezar':'Siguiente';
  $('#guideAction').hidden=!!tip;$('#guideAction').textContent=step[3]?(step[3]==='road'?'Trazar carretera':'Construir '+DEF[step[3]].name):step===CITY_GUIDE[4]?'Abrir Datos':'Inspeccionar';
@@ -1849,7 +1856,7 @@ function buySelectedLand(){
  const price=cells.reduce((a,c)=>a+landPrice(c),0);if(!canAfford(price)){showNotice('Fondos insuficientes');return;}
  changeMoney(-price);cells.forEach(c=>S.landUnlocked[c]=true);soundFx('land');addEvent(`${cells.length} parcelas urbanizadas por ${euro(price)}.`,'good','routine');closePopup();renderAll();
 }
-function cancelAction(){landDragging=false;roadDragging=false;down=false;drag=false;S.roadDragCells=[];S.moving=null;S.landSelection=[];S.tool='inspect';closePopup();renderAll();}
+function cancelAction(){if(MOBILE)clearMobilePlacement();landDragging=false;roadDragging=false;down=false;drag=false;S.roadDragCells=[];S.moving=null;S.landSelection=[];S.tool='inspect';closePopup();renderAll();}
 function moveSelected(){const b=S.grid[S.selected];if(!b||b.type==='road'||b.type==='townhall')return;S.moving=b;S.tool='move';closePopup();showNotice('Elige una parcela libre; sin carretera quedará inactivo · Esc cancela');renderAll();}
 function placeMoved(anchor){
  const b=S.moving;if(!b)return;
@@ -1962,7 +1969,7 @@ $("#palette").addEventListener("click",e=>{
   S.manualRotation=null;S.moving=null;S.tool=type;S.previewRot=randomRotation(type);closePopup();renderPalette();updateMapStatus();
 });
 let buildDrawerOpen=false;
-$("#buildDrawerTab").addEventListener("click",()=>{buildDrawerOpen=!buildDrawerOpen;$("#buildDrawer").classList.toggle("open",buildDrawerOpen);$("#buildDrawerTab").classList.toggle("open",buildDrawerOpen);$("#buildDrawerTab").setAttribute("aria-expanded",String(buildDrawerOpen));soundFx("ui")});
+$("#buildDrawerTab").addEventListener("click",()=>{if(MOBILE)mobileClosePanels('build');buildDrawerOpen=!buildDrawerOpen;$("#buildDrawer").classList.toggle("open",buildDrawerOpen);$("#buildDrawerTab").classList.toggle("open",buildDrawerOpen);$("#buildDrawerTab").setAttribute("aria-expanded",String(buildDrawerOpen));soundFx("ui")});
 $("#inspectBtn").addEventListener("click",()=>{cancelAction()});
 
 /* ---------- WebGL mínimo, sin librerías externas ---------- */
@@ -2145,11 +2152,11 @@ function beginVisit(){
  const center=buildingCenterWorld(road),previousSpeed=runningSpeed,previousLayer=S.layer,savedCamera={...cam,target:cam.target.slice()};
  cancelAction();setLayer('none');walk={x:center.x,z:center.z,yaw:cam.yaw+Math.PI,pitch:0,keys:new Set(),savedCamera,previousSpeed,previousLayer,pointers:new Map(),touchForward:0,touchSide:0,stride:0,bob:0};
  runningSpeed=1;simulationClock=0;markActivity();S.hoverCell=-1;S.hoverBuilding=null;
- document.body.classList.add('visiting');$('#leaveVisit').hidden=false;$('#leaveVisit').focus();canvas.requestPointerLock?.()?.catch?.(()=>{});return true;
+ document.body.classList.add('visiting');$('#leaveVisit').hidden=false;$('#leaveVisit').focus();if(MOBILE){mobileClosePanels();resetMobileGesture();}else canvas.requestPointerLock?.()?.catch?.(()=>{});return true;
 }
 function endVisit(){
  if(!walk)return;const old=walk;walk=null;if(document.pointerLockElement===canvas)document.exitPointerLock?.();cam=old.savedCamera;runningSpeed=S.gameOver||(!S.debug&&S.money<0)?0:old.previousSpeed;simulationClock=0;
- document.body.classList.remove('visiting');$('#leaveVisit').hidden=true;$('#visitBtn').focus();setLayer(old.previousLayer);updateCamera();renderUI(false);
+ if(MOBILE)resetMobileGesture();document.body.classList.remove('visiting');$('#leaveVisit').hidden=true;$('#visitBtn').focus();setLayer(old.previousLayer);updateCamera();renderUI(false);
 }
 function updateVisit(dt){
  if(!walk)return;
@@ -2167,7 +2174,7 @@ document.addEventListener('keyup',e=>{walk?.keys.delete(e.key.toLowerCase());});
 window.addEventListener('blur',()=>{if(walk){walk.keys.clear();walk.pointers.clear();walk.touchForward=walk.touchSide=0;}});
 function visitPointerDown(e){
  if(e.button!==0&&e.pointerType!=='touch')return;
- const mode=e.pointerType==='touch'&&e.clientX<canvas.getBoundingClientRect().left+canvas.clientWidth/2?'move':'look';
+ const mode=!MOBILE&&e.pointerType==='touch'&&e.clientX<canvas.getBoundingClientRect().left+canvas.clientWidth/2?'move':'look';
  walk.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,mode});canvas.setPointerCapture(e.pointerId);e.preventDefault();
 }
 function visitPointerMove(e){
@@ -3289,7 +3296,7 @@ function render3D(buildings=uniqueBuildings()){
   updatePopupPosition();
 }
 function resizeCanvas(){
-  const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,MOBILE?1.5:2);
   const w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}
 }
@@ -3301,6 +3308,7 @@ function projectPoint(x,y,z){
 }
 let popupPosition=null;
 function updatePopupPosition(){
+  if(MOBILE)return;
   if(!popup.classList.contains("visible"))return;
   if(popupPosition&&S.selectedLand==null){popup.style.left=popupPosition.left;popup.style.top=popupPosition.top;return;}
   let p;
@@ -3322,10 +3330,119 @@ function rayToGround(clientX,clientY){
 }
 
 /* ---------- Cámara / interacción ---------- */
+// Touch controls are isolated from the existing desktop event paths.
+const mobile={ready:false,pointers:new Map(),blocked:false,gesture:null,mode:'pan',cell:-1,tool:null,joystick:null,journalPage:0};
+function clearMobilePlacement(){mobile.cell=-1;mobile.tool=null;S.hoverCell=-1;S.hoverBuilding=null;if(mobile.ready)syncMobile();}
+function resetMobileGesture(){
+ mobile.pointers.clear();mobile.blocked=false;mobile.gesture=null;mobile.joystick=null;
+ roadDragging=landDragging=down=drag=false;cameraMode=null;S.roadDragCells=[];S.landSelection=[];
+ if(walk){walk.keys.clear();walk.pointers.clear();walk.touchForward=walk.touchSide=0;}
+ if(mobile.ready)$('#mobileStickKnob').style.transform='translate(0,0)';
+}
+function mobileClosePanels(except=null){
+ if(except!=='build'){buildDrawerOpen=false;$('#buildDrawer').classList.remove('open');$('#buildDrawerTab').classList.remove('open');$('#buildDrawerTab').setAttribute('aria-expanded','false');}
+ if(except!==analysisDrawer){analysisDrawer=null;for(const name of ['data','layers']){$('#'+name+'Drawer').classList.remove('open');$('#'+name+'Tab').classList.remove('active');$('#'+name+'Tab').setAttribute('aria-expanded','false');}shell.classList.remove('rightOpen','layersOpen');}
+ if(mobile.ready){for(const id of ['mobileMenu','mobileJournal','mobileHelp','mobileRename'])if(except!==id)$('#'+id).hidden=true;}
+ closePopup();if(mobile.ready)syncMobile();
+}
+function mobilePair(){const [a,b]=mobile.pointers.values();return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),a:Math.atan2(b.y-a.y,b.x-a.x)};}
+function mobilePan(dx,dy){const scale=cam.dist*.00145,c=Math.cos(cam.yaw),s=Math.sin(cam.yaw);cam.target[0]=clamp(cam.target[0]-(dx*c+dy*s)*scale,-W*.46,W*.46);cam.target[2]=clamp(cam.target[2]-(-dx*s+dy*c)*scale,-H*.46,H*.46);}
+function mobileCellAt(e){const p=rayToGround(e.clientX,e.clientY);return p?cellFromWorld(p.x,p.z):-1;}
+function mobilePointerDown(e){
+ e.preventDefault();if(walk){visitPointerDown(e);return;}ensureAudio();canvas.setPointerCapture(e.pointerId);
+ mobile.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false});
+ if(mobile.pointers.size>1){mobile.blocked=true;mobile.gesture=mobilePair();roadDragging=landDragging=false;S.roadDragCells=[];S.landSelection=[];clearMobilePlacement();return;}
+ if(mobile.blocked)return;const i=mobileCellAt(e);
+ if(i>=0&&S.tool==='road'){roadDragging=true;roadStart=i;S.roadDragCells=[i];}
+ if(i>=0&&S.tool==='land'){closePopup();landDragging=true;landStart=i;S.landSelection=[i];}
+}
+function mobilePointerMove(e){
+ if(walk){visitPointerMove(e);return;}const p=mobile.pointers.get(e.pointerId);if(!p)return;e.preventDefault();
+ const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;p.moved||=Math.hypot(p.x-p.sx,p.y-p.sy)>8;
+ if(mobile.pointers.size>1){const next=mobilePair(),old=mobile.gesture||next;mobilePan(next.x-old.x,next.y-old.y);cam.dist=clamp(cam.dist*old.d/next.d,5,34);const angle=Math.atan2(Math.sin(next.a-old.a),Math.cos(next.a-old.a));cam.yaw-=angle;mobile.gesture=next;return;}
+ if(mobile.blocked)return;
+ const i=mobileCellAt(e);S.hoverCell=i;S.hoverBuilding=i>=0?S.grid[i]:null;
+ if(roadDragging&&i>=0){S.roadDragCells=S.roadAction==='upgrade'?[...new Set([...S.roadDragCells,...roadDragPath(roadStart,i)])]:roadDragPath(roadStart,i);if(S.roadAction==='upgrade')roadStart=i;updateRoadQuote();return;}
+ if(landDragging&&i>=0){const a=coord(landStart),b=coord(i);S.landSelection=[];for(let z=Math.min(a.z,b.z);z<=Math.max(a.z,b.z);z++)for(let x=Math.min(a.x,b.x);x<=Math.max(a.x,b.x);x++){const c=idx(x,z);if(!S.landUnlocked[c]&&!S.grid[c])S.landSelection.push(c);}return;}
+ if(p.moved){if(mobile.mode==='orbit'){cam.yaw-=dx*.009;cam.pitch=clamp(cam.pitch+dy*.007,.08,1.22);}else mobilePan(dx,dy);S.hoverCell=mobile.cell;}
+}
+function mobilePointerUp(e){
+ if(walk){visitPointerUp(e);return;}const p=mobile.pointers.get(e.pointerId);if(!p)return;e.preventDefault();mobile.pointers.delete(e.pointerId);
+ if(mobile.blocked){if(!mobile.pointers.size){mobile.blocked=false;mobile.gesture=null;}return;}
+ if(roadDragging){buildRoadDrag();$('#roadQuote').hidden=true;return;}
+ if(landDragging){landDragging=false;showLandPopup(landStart,S.landSelection);syncMobile();return;}
+ if(p.moved)return;const i=mobileCellAt(e);if(i<0)return;
+ if(S.moving||DEF[S.tool]&&S.tool!=='road'){
+  mobile.cell=i;mobile.tool=S.moving?.type||S.tool;S.hoverCell=i;S.previewRot=placementRotation(i,mobile.tool);syncMobile();return;
+ }
+ if(S.grid[i])selectBuilding(i);else closePopup();syncMobile();
+}
+function confirmMobilePlacement(){
+ if(mobile.cell<0||mobile.tool!==(S.moving?.type||S.tool))return;const i=mobile.cell;
+ if(S.moving)placeMoved(i);else build(i,S.tool);
+ clearMobilePlacement();syncMobile();
+}
+function mobileGuideText(step,tip){
+ if(tip)return step[2];
+ const gestures=step[3]==='road'?' Toca Construcción, elige Carretera y pulsa Colocar. Arrastra un dedo desde la calle central. Dos dedos mueven la cámara y pellizcar acerca o aleja.':step[3]?' Toca Construcción, elige el edificio y pulsa Colocar. Toca una parcela, revisa la vista previa y pulsa Confirmar.':step===CITY_GUIDE[4]?' Toca Datos en la barra inferior.':' Toca una vivienda en el mapa para consultar su ficha. Cierra la ficha para seguir jugando.';
+ return step[2]+gestures;
+}
+function syncMobile(){
+ if(!mobile.ready)return;
+ if(mobile.tool&&mobile.tool!==(S.moving?.type||S.tool)){mobile.cell=-1;mobile.tool=null;}
+ const sheet=buildDrawerOpen||!!analysisDrawer||!$('#mobileMenu').hidden||!$('#mobileJournal').hidden;
+ document.body.classList.toggle('mobile-sheet-open',sheet);
+ for(const [id,open] of [['buildDrawer',buildDrawerOpen],['dataDrawer',analysisDrawer==='data'],['layersDrawer',analysisDrawer==='layers']])$('#'+id).inert=!open;
+ const placing=S.tool!=='inspect';document.body.classList.toggle('mobile-placing',placing);
+ $('#mobileActions').hidden=sheet||!placing||popup.classList.contains('visible');$('#mobileConfirm').hidden=mobile.cell<0;$('#mobileConfirm').textContent=mobile.cell<0?'Confirmar':S.moving?'Confirmar traslado':'Confirmar · '+(S.debug?'GRATIS':euro(buildPrice(S.tool)));
+ $('#cancelAction').hidden=!placing;$('#cancelAction').textContent='Cancelar';
+ $('#mobilePlace').disabled=!DEF[S.tool];$('#mobilePlace').textContent=DEF[S.tool]?'Colocar '+DEF[S.tool].name:'Elige una construcción';
+ $('#mobileHint').textContent=S.tool==='road'?'Arrastra para trazar · dos dedos para mover':S.tool==='land'?'Arrastra para seleccionar terreno':mobile.cell>=0?'Revisa la parcela y confirma':'Toca una parcela · dos dedos para mover';
+ $('#mobileMenuToggle').setAttribute('aria-expanded',String(!$('#mobileMenu').hidden));
+ for(const [id,label] of [['visitBtn','Pasear'],['rotateBtn','Girar edificio']]){$('#'+id).title=label;$('#'+id).setAttribute('aria-label',label);}
+ $('#leaveVisit').title='Dejar de visitar';
+}
+function initMobile(){
+ const create=(tag,id,parent,html='')=>{const el=document.createElement(tag);el.id=id;el.innerHTML=html;parent.appendChild(el);return el;};
+ const app=$('.app'),nav=create('nav','mobileNav',app),menu=create('section','mobileMenu',app,'<h2>Tu ciudad</h2>');menu.hidden=true;
+ const journal=create('section','mobileJournal',app,'<h2>Registro Urbano</h2><ol id="mobileNews"></ol><div class="mobileJournalPages"><button class="btn" id="mobileNewsPrev">Más recientes</button><button class="btn" id="mobileNewsNext">Anteriores</button></div>');journal.hidden=true;
+ const button=(id,label,parent,fn)=>{const b=create('button',id,parent,label);b.className='btn';b.type='button';b.addEventListener('click',fn);return b;};
+ for(const id of ['buildDrawerTab','dataTab','layersTab','landBtn'])nav.appendChild($('#'+id));
+ button('mobileMenuToggle','Menú',nav,()=>{const open=menu.hidden;mobileClosePanels();menu.hidden=!open;syncMobile();});
+ menu.appendChild($('.editing-controls'));menu.appendChild($('.controls'));
+ button('mobileJournalOpen','Registro Urbano',menu,()=>{mobileClosePanels();journal.hidden=false;mobile.journalPage=0;renderMobileJournal();syncMobile();});
+ button('mobileGuideOpen','Tutorial y controles',menu,()=>{mobileClosePanels();document.body.classList.add('mobile-guide-expanded');$('#mobileHelp').hidden=false;syncMobile();});
+ const rename=create('section','mobileRename',app,'<form class="access-card" id="mobileRenameForm"><h2>Nombre de la ciudad</h2><label for="mobileRenameInput">Nuevo nombre · 10.000 €</label><input id="mobileRenameInput" maxlength="32" required autocomplete="off"><p id="mobileRenameError" role="status"></p><button class="btn" type="submit">Guardar nombre</button><button class="btn" type="button" id="mobileRenameClose">Cancelar</button></form>');rename.className='game-screen';rename.hidden=true;
+ $('#mobileRenameForm').addEventListener('submit',e=>{e.preventDefault();if(renameCity($('#mobileRenameInput').value))rename.hidden=true;else $('#mobileRenameError').textContent=$('#notice').textContent;});$('#mobileRenameClose').addEventListener('click',()=>{rename.hidden=true;});
+ const help=create('section','mobileHelp',app,'<h2>Controles táctiles</h2><p>Un dedo mueve la cámara. El botón Cámara cambia entre mover y girar/inclinar. Con dos dedos puedes desplazar, pellizcar para acercar y girar la vista.</p><p>Construcción: elige una ficha y pulsa Colocar. Toca una parcela y Confirma; usa Girar o Cancelar cuando lo necesites. Para carreteras y terreno, arrastra un dedo. Un segundo dedo cancela el trazo sin cobrar.</p><p>Paseo: mueve el joystick y arrastra el mapa para mirar. Solo puedes caminar por carreteras. Usa Dejar de visitar para salir.</p>');help.hidden=true;button('mobileHelpClose','Volver a la ciudad',help,()=>{help.hidden=true;});
+ for(const id of ['buildDrawer','dataDrawer','layersDrawer','mobileMenu','mobileJournal']){const panel=$('#'+id),close=button('mobileClose-'+id,'Cerrar',panel,()=>{mobileClosePanels();});close.classList.add('mobileSheetClose');panel.prepend(close);}
+ button('mobilePlace','Elige una construcción',$('#buildDrawer'),()=>{mobileClosePanels();syncMobile();});
+ const actions=create('div','mobileActions',app,'<div id="mobileHint" role="status"></div>');actions.hidden=true;
+ actions.appendChild($('#roadTools'));actions.appendChild($('#rotateBtn'));actions.appendChild($('#cancelAction'));button('mobileConfirm','Confirmar',actions,confirmMobilePlacement);
+ const camera=create('div','mobileCamera',app);button('mobileCameraMode','Cámara: mover',camera,()=>{mobile.mode=mobile.mode==='pan'?'orbit':'pan';$('#mobileCameraMode').textContent=mobile.mode==='pan'?'Cámara: mover':'Cámara: girar';});button('mobileZoomIn','＋',camera,()=>{cam.dist=clamp(cam.dist*.8,5,34);}).setAttribute('aria-label','Acercar');button('mobileZoomOut','−',camera,()=>{cam.dist=clamp(cam.dist/ .8,5,34);}).setAttribute('aria-label','Alejar');
+ const stick=create('div','mobileJoystick',document.body,'<span id="mobileStickKnob"></span><span class="mobileStickLabel">Mover</span>');stick.setAttribute('role','group');stick.setAttribute('aria-label','Joystick para caminar');
+ const joystickMove=e=>{if(!walk||mobile.joystick!==e.pointerId)return;e.preventDefault();const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,d=Math.max(36,Math.hypot(dx,dy));walk.touchSide=dx/d;walk.touchForward=-dy/d;$('#mobileStickKnob').style.transform=`translate(${dx/d*36}px,${dy/d*36}px)`;};
+ stick.addEventListener('pointerdown',e=>{if(!walk||mobile.joystick!=null)return;e.preventDefault();mobile.joystick=e.pointerId;stick.setPointerCapture(e.pointerId);joystickMove(e);});stick.addEventListener('pointermove',joystickMove);
+ const release=e=>{if(mobile.joystick!==e.pointerId)return;mobile.joystick=null;if(walk)walk.touchSide=walk.touchForward=0;$('#mobileStickKnob').style.transform='translate(0,0)';};for(const event of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(event,release);
+ button('mobileGuideToggle','Mostrar / ocultar ayuda',$('#cityGuide'),()=>document.body.classList.toggle('mobile-guide-expanded'));
+ $('#mobileNewsPrev').addEventListener('click',()=>{mobile.journalPage=Math.max(0,mobile.journalPage-1);renderMobileJournal();});$('#mobileNewsNext').addEventListener('click',()=>{mobile.journalPage++;renderMobileJournal();});
+ app.addEventListener('click',()=>{syncMobile();});
+ for(const id of ['landBtn','inspectBtn'])$('#'+id).addEventListener('click',()=>mobileClosePanels());
+ canvas.addEventListener('lostpointercapture',e=>{if(mobile.pointers.has(e.pointerId))resetMobileGesture();});
+ $('.start-controls').textContent='Controles: un dedo para mover · dos dedos para zoom y giro · toca para seleccionar';
+ $('#palette').addEventListener('click',()=>{clearMobilePlacement();syncMobile();});
+ $('#guideAction').addEventListener('click',()=>{document.body.classList.remove('mobile-guide-expanded');if(DEF[S.tool])mobileClosePanels();});
+ $('.mapHelp').textContent='Un dedo: mover · dos dedos: zoom y giro';$('#leaveVisit').title='Dejar de visitar';$('#visitBtn').title='Pasear: joystick para caminar y arrastre para mirar';$('#rotateBtn').title='Girar edificio';
+ const viewport=()=>{resetMobileGesture();const v=window.visualViewport;document.body.style.setProperty('--mobile-vh',(v?.height||window.innerHeight)+'px');document.body.style.setProperty('--mobile-top',(v?.offsetTop||0)+'px');syncMobile();};
+ window.visualViewport?.addEventListener('resize',viewport);window.addEventListener('resize',viewport);window.addEventListener('blur',resetMobileGesture);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetMobileGesture();});
+ mobile.ready=true;document.body.classList.toggle('mobile-guide-expanded',!S.tutorialDone);viewport();syncMobile();
+}
+function renderMobileJournal(){const all=[...(S.newsSeen||[])].reverse(),pages=Math.max(1,Math.ceil(all.length/20));mobile.journalPage=Math.min(mobile.journalPage,pages-1);const list=$('#mobileNews');list.textContent='';for(const news of all.slice(mobile.journalPage*20,mobile.journalPage*20+20)){const item=document.createElement('li');item.textContent=news;list.appendChild(item);}if(!all.length)list.textContent='Las noticias de tu ciudad aparecerán aquí.';$('#mobileNewsPrev').disabled=mobile.journalPage===0;$('#mobileNewsNext').disabled=mobile.journalPage>=pages-1;}
 let landDragging=false,landStart=-1;
 let down=false,drag=false,lastX=0,lastY=0,startX=0,startY=0,roadDragging=false,roadStart=-1,cameraMode=null;
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
 canvas.addEventListener("pointerdown",e=>{
+  if(MOBILE){mobilePointerDown(e);return;}
   if(walk){visitPointerDown(e);return;}
   ensureAudio();
   if(e.button===2||e.button===1){cameraMode="pan";lastX=e.clientX;lastY=e.clientY;canvas.classList.add("dragging");canvas.setPointerCapture(e.pointerId);return;}
@@ -3336,6 +3453,7 @@ canvas.addEventListener("pointerdown",e=>{
   down=true;drag=false;lastX=startX=e.clientX;lastY=startY=e.clientY;canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener("pointermove",e=>{
+  if(MOBILE){mobilePointerMove(e);return;}
   if(walk){visitPointerMove(e);return;}
   const p=rayToGround(e.clientX,e.clientY);if(p){const i=cellFromWorld(p.x,p.z);S.hoverCell=i;S.hoverBuilding=i>=0?S.grid[i]:null;if(roadDragging&&i>=0){S.roadDragCells=S.roadAction==='upgrade'?[...new Set([...S.roadDragCells,...roadDragPath(roadStart,i)])]:roadDragPath(roadStart,i);if(S.roadAction==='upgrade')roadStart=i;updateMapStatus();}}else{S.hoverCell=-1;S.hoverBuilding=null}
   if(landDragging){if(S.hoverCell>=0){const a=coord(landStart),b=coord(S.hoverCell);S.landSelection=[];for(let z=Math.min(a.z,b.z);z<=Math.max(a.z,b.z);z++)for(let x=Math.min(a.x,b.x);x<=Math.max(a.x,b.x);x++){const c=idx(x,z);if(!S.landUnlocked[c]&&!S.grid[c])S.landSelection.push(c);}}return;}
@@ -3395,6 +3513,7 @@ canvas.addEventListener('pointercancel',()=>{$('#roadQuote').hidden=true;});
 function roadBuildCost(i){return buildPrice('road')*(S.river[i]?2:1);}
 
 canvas.addEventListener("pointerup",e=>{
+  if(MOBILE){mobilePointerUp(e);return;}
   if(walk){visitPointerUp(e);return;}
   if(landDragging){landDragging=false;showLandPopup(landStart,S.landSelection);return;}
   if(cameraMode){cameraMode=null;canvas.classList.remove("dragging");return;}
@@ -3403,8 +3522,8 @@ canvas.addEventListener("pointerup",e=>{
   if(!drag){const p=rayToGround(e.clientX,e.clientY);if(!p)return;const i=cellFromWorld(p.x,p.z);if(i<0)return;if(S.moving){placeMoved(i);return;}if(S.tool==="land"){showLandPopup(i);return;}if(!S.landUnlocked[i]){if(S.tool!=='inspect')showNotice('Activa el contrato de Urbanizar para comprar terreno.');return;}if(S.grid[i])selectBuilding(i);else if(S.tool!=="inspect")build(i,S.tool);else closePopup();}
 });
 canvas.addEventListener("wheel",e=>{e.preventDefault();if(walk)return;cam.dist=clamp(cam.dist*Math.exp(e.deltaY*.00115),5,34);},{passive:false});
-canvas.addEventListener('pointercancel',e=>{visitPointerUp(e);down=false;drag=false;roadDragging=false;landDragging=false;cameraMode=null;S.roadDragCells=[];S.landSelection=[];canvas.classList.remove('dragging');});
-function selectBuilding(i){if(popup.classList.contains('visible')&&S.selected!==i)closePopup();S.selected=i;openPopup(i)}
+canvas.addEventListener('pointercancel',e=>{if(MOBILE)resetMobileGesture();visitPointerUp(e);down=false;drag=false;roadDragging=false;landDragging=false;cameraMode=null;S.roadDragCells=[];S.landSelection=[];canvas.classList.remove('dragging');});
+function selectBuilding(i){if(MOBILE){mobileClosePanels();clearMobilePlacement();}if(popup.classList.contains('visible')&&S.selected!==i)closePopup();S.selected=i;openPopup(i)}
 
 /* ---------- UI ---------- */
 const LAYERS={entertainment:{name:'Entretenimiento',hint:'Cobertura cultural efectiva'},none:{name:'Colores originales',hint:'Arquitectura y luz natural'},goods:{name:'Mercancías',hint:'0–100%: actividad industrial o demanda cubierta en su red viaria'},pollution:{name:'Contaminación neta',hint:'Rojo: emite · verde: reduce',diverging:true},economy:{name:'Balance por edificio',hint:'Ingresos e impuestos menos mantenimiento',diverging:true},satisfaction:{name:'Satisfacción residencial',hint:'Valor local por vivienda'},education:{name:'Educación local',hint:'Cobertura educativa efectiva'},health:{name:'Salud local',hint:'Cobertura sanitaria efectiva'},security:{name:'Seguridad local',hint:'Cobertura policial efectiva'},fire:{name:'Protección local contra incendios',hint:'Cobertura de bomberos efectiva'},traffic:{name:'Congestión vial',hint:'Uso de capacidad: 0–100%'}};
@@ -3435,6 +3554,7 @@ function buildingHeatColor(b){
 }
 let analysisDrawer=null,layerButtonsKey='';
 function toggleAnalysis(which){
+ if(MOBILE)mobileClosePanels(which);
  analysisDrawer=analysisDrawer===which?null:which;if(analysisDrawer!=='layers'&&S.layer!=='none')setLayer('none');
  $('#dataDrawer').classList.toggle('open',analysisDrawer==='data');$('#layersDrawer').classList.toggle('open',analysisDrawer==='layers');
  shell.classList.toggle('rightOpen',!!analysisDrawer);shell.classList.toggle('layersOpen',analysisDrawer==='layers');
@@ -3530,7 +3650,7 @@ function renderUI(recalculate=true){
 
   $("#taxText").textContent=S.tax+"%";$("#taxInput").value=S.tax;const cl=$("#consequenceList");cl.innerHTML=S.serviceConsequences.length?S.serviceConsequences.map(x=>`<div class="consequence">${x}</div>`).join(""):`<div class="consequence ok">Cobertura de servicios sin incidencias críticas.</div>`;
   for(const [kind,id] of [['health','healthVal'],['education','educationVal'],['security','securityVal'],['fire','fireVal'],['entertainment','entertainmentVal']])$('#'+id).closest('.metric').hidden=!metricAvailable(kind);
-  renderLayerUI();updateMapStatus();
+  renderLayerUI();updateMapStatus();if(MOBILE)syncMobile();
 
   if(popup.classList.contains("visible")&&S.selected!=null&&S.grid[S.selected])openPopup(S.selected);
 }
@@ -3556,7 +3676,7 @@ $('#loanMonths').addEventListener('change',renderResearchAndLoan);$('#loanAmount
 $('#debugTime').addEventListener('change',()=>{if(!S.debug)return;if(runningSpeed&&simulationClock>0)advance(simulationClock*simulationRate());simulationClock=0;if(runningSpeed)runningSpeed=clamp(Number($('#debugTime').value)||1,1,10);});
 $('#mergeBtn').addEventListener('click',mergeSelected);
 $('#rotateBtn').addEventListener('click',rotatePlacement);
-$('#cityTitle').addEventListener('click',()=>{const name=prompt('Nuevo nombre de la ciudad (10.000 €):',S.cityName||'Mi ciudad');if(name!==null)renameCity(name);});
+$('#cityTitle').addEventListener('click',()=>{if(MOBILE){mobileClosePanels();$('#mobileRenameInput').value=S.cityName||'Mi ciudad';$('#mobileRenameError').textContent='';$('#mobileRename').hidden=false;$('#mobileRenameInput').focus();return;}const name=prompt('Nuevo nombre de la ciudad (10.000 €):',S.cityName||'Mi ciudad');if(name!==null)renameCity(name);});
 $('#cityTitle').setAttribute('role','button');$('#cityTitle').setAttribute('tabindex','0');$('#cityTitle').title='Cambiar nombre · 10.000 €';$('#cityTitle').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#cityTitle').click();}});
 $('#musicBtn').addEventListener('click',toggleMusic);$('#debugLevelBtn').addEventListener('click',debugAdvanceLevel);
 $('#dayNightBtn').addEventListener('click',()=>{S.dayNight=S.dayNight===false;sceneryDirty=true;renderUI();});
@@ -3644,6 +3764,7 @@ $('#mainMenuBtn').addEventListener('click',async()=>{runningSpeed=0;simulationCl
 $('#endCity').addEventListener('click',()=>{if(S.debug||S.money>=0)return;S.gameOver=true;runningSpeed=0;renderEmergency();void saveCity();});
 $('#restartCity').addEventListener('click',()=>{$('#resetBtn').click();renderEmergency();});
 refreshTopIcons();
+if(MOBILE)initMobile();
 
 })();
 </script>
