@@ -9,7 +9,7 @@ const ctx={document:doc,window:{addEventListener(){}},performance:{now:()=>1000}
 vm.createContext(ctx);
 let js=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 js=js.replace(/\}\)\(\);\s*$/, `Object.assign(thisTest,{renderResearchAndLoan,transitRoadRelief,buildingEmissions,operational,cityNews,upgradeToMaximum,roadConstructionQuote,advanceGuide,guideRequirementMet,presentNextNews,addEvent,currentUnlockAdvice,computeGoods,goodsDemand,goodsRequirement,goodsCanPlace,goodsFactor,industrialFusionGroup,roadComponents,computeTraffic,clearBuilding,isIndustry,getGoodsRoutes:()=>goodsRoutes,getTrafficRoutes:()=>trafficRoutes,captureProduction:buildings=>{captureParts=[];drawIndustryProduction(buildings);const p=captureParts;captureParts=null;return p;},parkFusionGroup,parkSections,localResidentialSatisfaction,roadLaneDividers,ROAD_LANES,roadLamp,FS,repayLoan,researchDemand,surfaceFor,parkLampOffsets,shortestRoadPath,laneOffset,tickSimulation,markActivity,getSpeed:()=>runningSpeed,fireProbability,debugAdvanceLevel,buildingPalette,crossfadeMusic,toggleAnalysis,setLayer,setFrame:n=>lastFrame=n,upgradeSpace,renderEmergency,windowLight,hasCrosswalk,roadColor,roadDragQuote,metricAvailable,layerValue,localServices,cityParticles,getServiceCars:()=>serviceCars,fusionGroup,mergeSelected,renameCity,rotatePlacement,generateRiver,buildingDef,buildingUpgradeCost,canPlace,currentSun,drawRoadTile,renderCityGuide,takeLoan,loanLimit,loanHourly,loanTerms,unlockTechnology,buildingLocked,buildPrice,taxDiscomfort,spreadFires,fireProtection,trafficSpeedFactor,simulationRate,serviceEfficiency,citySnapshot,restoreCity,setDebug,canAfford,changeMoney,ensureLevel,maxAllowedLevel,commercialRevenue,apportion,buildingStats,renderUI,buildRoadDrag,demolishSelected,getState:()=>S,setState:s=>S=s,newState,DEF,LEVELS,UP_MULT,idx,coord,footprint,build,calc,advance,uniqueBuildings,placementRotation,buildingCells,openPopup,moveSelected,placeMoved,cancelAction,showLandPopup,buySelectedLand,upgradeSelected,upgradeCost,drawBuilding,thumbSVG,power,STAR_FIELD,render3D,updateCars,getCars:()=>cars,setSpeed:n=>{runningSpeed=n;if(n)markActivity(lastFrame)},resetCars:()=>cars=[],captureRoad:(i)=>{captureParts=[];const c=coord(i),w=worldFromCell(c.x,c.z);drawRoadTile(i,S.grid[i],w);const p=captureParts;captureParts=null;return p;},geometryFor,smogAmount,capture:b=>{captureParts=[];const fp=b.parkLevels?{w:b.w,h:b.h}:footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;return p;}});})();`);
-js=js.replace('Object.assign(thisTest,{','Object.assign(thisTest,{fmt,isRaining,isFlooding,floodDepth,floodDuration,advanceWeather,renderWeather,storeBuilding,takeInventory,savedBuilding,CITY_GUIDE,getVisitDrag:()=>visitDrag,visitDragMove,finishVisitDrag,setCars:v=>cars=v,lunarPhase,sunDiscColor,vividColor,renderMunicipality,ORDINANCES,ORDINANCE_COST,activateOrdinance,ordinanceSwitchCost,municipalRoads,municipalTrafficFactor,baseBuildingDef,syncTownhall,openMunicipality,carPose,carsTooClose,solarFusionGroup,portWaterfront,cargoShipPose,riverShippingPath,nuisanceRadius,satisfactionDetails,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,WALK_SPEED,CAR_MAX_SPEED,getWalk:()=>walk,getEye:()=>camEye,visitPointerDown,visitPointerMove,visitPointerUp,captureInfluence:b=>{captureParts=[];drawInfluence(b);const parts=captureParts;captureParts=null;return parts;},serviceContribution,serviceDelta,attractiveness,influenceRadius,maximumUpgradeCost,utilityStatus,statLabel,lightIndustrialFusionGroup,ironicHeadlines,nameNewCity,vertexDataForParts,closePopup,updatePopupPosition,renderPalette,buildingSpecs,captureLayer:b=>{captureParts=[];captureScene=true;const fp=footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;captureScene=false;return p;},captureLayerRoad:i=>{captureParts=[];captureScene=true;const c=coord(i);drawRoadTile(i,S.grid[i],worldFromCell(c.x,c.z));const p=captureParts;captureParts=null;captureScene=false;return p;},');
+js=js.replace('Object.assign(thisTest,{','Object.assign(thisTest,{isJunction,junctionSignal,approachingJunction,roadPaving,receiverHeight,skyHorizon,groundShadowTriangles,migrateMunicipality,setTrafficClock:t=>industryClock=t,getTrafficClock:()=>industryClock,captureCivic:(buildings,t)=>{captureParts=[];drawCivicMotion(buildings,t);const p=captureParts;captureParts=null;return p;},captureSignals:buildings=>{captureParts=[];drawTrafficSignals(buildings);const p=captureParts;captureParts=null;return p;},fmt,isRaining,isFlooding,floodDepth,floodDuration,advanceWeather,renderWeather,storeBuilding,takeInventory,savedBuilding,CITY_GUIDE,getVisitDrag:()=>visitDrag,visitDragMove,finishVisitDrag,setCars:v=>cars=v,lunarPhase,sunDiscColor,vividColor,renderMunicipality,ORDINANCES,ORDINANCE_COST,activateOrdinance,ordinanceSwitchCost,municipalRoads,municipalTrafficFactor,baseBuildingDef,syncTownhall,openMunicipality,carPose,carsTooClose,solarFusionGroup,portWaterfront,cargoShipPose,riverShippingPath,nuisanceRadius,satisfactionDetails,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,WALK_SPEED,CAR_MAX_SPEED,getWalk:()=>walk,getEye:()=>camEye,visitPointerDown,visitPointerMove,visitPointerUp,captureInfluence:b=>{captureParts=[];drawInfluence(b);const parts=captureParts;captureParts=null;return parts;},serviceContribution,serviceDelta,attractiveness,influenceRadius,maximumUpgradeCost,utilityStatus,statLabel,lightIndustrialFusionGroup,ironicHeadlines,nameNewCity,vertexDataForParts,closePopup,updatePopupPosition,renderPalette,buildingSpecs,captureLayer:b=>{captureParts=[];captureScene=true;const fp=footprint(b.type,b.rot||0,b.level);drawBuilding({...b,w:fp.w,h:fp.h,anchor:0},-(fp.w-1)/2,-(fp.h-1)/2);const p=captureParts;captureParts=null;captureScene=false;return p;},captureLayerRoad:i=>{captureParts=[];captureScene=true;const c=coord(i);drawRoadTile(i,S.grid[i],worldFromCell(c.x,c.z));const p=captureParts;captureParts=null;captureScene=false;return p;},');
 ctx.thisTest={};vm.runInContext(js,ctx);const g=ctx.thisTest;
 function reset(){g.setState(g.newState(false));const s=g.getState();s.landUnlocked.fill(true);s.river.fill(false);s.money=1e8;s.cityLevel=8;s.day=100;s.weather.checkedDay=4;s.unlockAt=Object.fromEntries(Object.keys(g.DEF).map(t=>[t,0]));s.technologies=['solar','wastewater','university','hospital','nuclear'];return s;}
 function add(x,z,t,l=1,occ=0){const s=g.getState(),i=g.idx(x,z);if(['solar','wastewater','university','hospital','nuclear'].includes(t))s.researchCap=(s.researchUse||0)+10;g.build(i,t);const b=s.grid[i];assert(b&&b.type===t,`build ${t} ${x},${z}`);b.level=l;b.occ=occ;return b;}
@@ -17,10 +17,45 @@ const results=[];function test(n,f){f();results.push(n);console.log('PASS',n)}
 
 
 
+
+test('Signals alternate axes, clear the junction and let both approaches finish without collisions',()=>{
+ const s=reset();for(let x=7;x<=13;x++)add(x,10,'road');for(let z=7;z<=13;z++)if(z!==10)add(10,z,'road');add(7,11,'residential',8,500);add(13,11,'commercial',5);g.calc();
+ for(const b of g.uniqueBuildings())if(b.type==='road')b.traffic=0;
+ const junction=g.idx(10,10),offset=(10+10)*2,clock=22-offset%22;g.setTrafficClock(clock);assert.equal(g.junctionSignal(junction,clock),'x');assert.equal(g.junctionSignal(junction,clock+9),null);assert.equal(g.junctionSignal(junction,clock+12),'z');
+ const a={path:[8,9,10,11,12].map(x=>g.idx(x,10)),t:1.25,lane:0,color:'#ffffff'},b={path:[8,9,10,11,12].map(z=>g.idx(10,z)),t:1.25,lane:0,color:'#ffffff'};
+ const follower={...b,path:b.path.slice(),t:.9};g.setCars([a,b,follower]);g.setSpeed(1);const rand=ctx.Math.random;ctx.Math.random=()=>0;
+ try{for(let frame=0;frame<440;frame++){g.updateCars(.1);if(frame===70){assert(b.signalWait);assert(!b.retired);}const cars=g.getCars();for(let i=0;i<cars.length;i++)for(let j=i+1;j<cars.length;j++)assert(!g.carsTooClose(g.carPose(cars[i]),g.carPose(cars[j])));}}finally{ctx.Math.random=rand;g.setSpeed(0);}
+ assert(a.t>=a.path.length-1&&b.t>=b.path.length-1&&follower.t>=follower.path.length-1,'both approaches and the queued follower complete the crossing');
+ const colors=g.captureSignals([s.grid[junction]]).map(p=>p.col);assert(colors.includes('#e44843'));
+});
+test('Civic motion rotates only the cube and animates small fountain jets',()=>{
+ const s=reset(),cube={type:'monument',level:1,palette:4,anchor:g.idx(12,12),w:1,h:1,rot:0},park={type:'park',level:3,anchor:g.idx(15,15),w:2,h:2,rot:0};
+ const first=g.captureCivic([cube,park],0),next=g.captureCivic([cube,park],2);assert.equal(first.filter(p=>p.mesh==='cornerCube').length,1);assert.equal(first[0].x,next[0].x);assert.equal(first[0].y,next[0].y);assert.notEqual(first[0].ry,next[0].ry);assert.notDeepEqual(first.slice(1),next.slice(1));assert(first.slice(1).every(p=>p.sx<=.02));
+ for(let level=3;level<=5;level++)assert(g.capture({type:'theater',level}).some(p=>p.mesh==='dome'&&p.col==='#d7ad62'));
+});
+test('Road paving leaves asphalt uncovered; zebras run along each road direction',()=>{
+ for(const horizontal of [true,false]){
+  const s=reset();for(let n=4;n<=25;n++)add(horizontal?n:10,horizontal?10:n,'road',8);
+  const road=g.uniqueBuildings().find(b=>g.hasCrosswalk(b.anchor));assert(road);
+  const parts=g.captureRoad(road.anchor),zebras=parts.filter(p=>p.col==='#eee8d3');assert.equal(zebras.length,5);assert(zebras.every(p=>horizontal?p.sx>p.sz:p.sz>p.sx));
+  const paving=parts.filter(p=>p.col==='#b4b7a9'),asphalt=parts.filter(p=>p.col===g.roadColor(0));
+  for(const p of paving)for(const a of asphalt)assert(!(Math.abs(p.x-a.x)<(p.sx+a.sx)/2-1e-7&&Math.abs(p.z-a.z)<(p.sz+a.sz)/2-1e-7),'pavement covers asphalt');
+ }
+});
+test('Ground shadows follow road and terrain heights; daylight horizon is lighter and sunset warmer',()=>{
+ const s=reset();add(18,18,'road');assert.equal(g.receiverHeight(.5,.5),.027);assert.equal(g.receiverHeight(2.5,2.5),.001);
+ const data=[];g.groundShadowTriangles([[0,0],[3,0],[3,3],[0,3]],.2,data);const heights=data.filter((_,i)=>i%4===1);assert(heights.includes(.027)&&heights.includes(.001));assert(!heights.includes(.054));
+ const noon=g.skyHorizon({daylight:1,warm:0},[.26,.56,.86]),sunset=g.skyHorizon({daylight:1,warm:1},[.26,.56,.86]);assert(noon[0]>.26&&noon[1]>.56&&noon[2]>.86);assert(sunset[0]>noon[0]&&sunset[2]<noon[2]);
+});
+test('Legacy halls expand only into free connected land and all new halls use four cells',()=>{
+ const s=reset(),anchor=g.idx(12,12);add(12,14,'road');const hall={type:'townhall',anchor,w:1,h:2,cells:[anchor,anchor+36],level:8,rot:1,palette:0,occ:0,fire:0};hall.cells.forEach(c=>s.grid[c]=hall);g.migrateMunicipality();assert.equal(hall.cells.length,4);assert.equal(hall.w,2);assert.equal(hall.h,2);
+ for(let level=1;level<=8;level++){const p=g.capture({type:'townhall',level,rot:0});assert(p.some(q=>q.sx>1.9&&q.sz>1.9));if(level>=2)assert(p.some(q=>q.col==='#a37856'));}
+});
+
 test('Stuck vehicles retire safely and service routes are rebuilt when roads expand',()=>{
  const s=reset();for(let x=8;x<=12;x++)add(x,7,'road');add(8,8,'residential',8,500);add(12,8,'commercial',5);g.calc();g.setSpeed(1);
  const path=[g.idx(8,7),g.idx(9,7),g.idx(10,7)],a={path,t:0,lane:0,color:'#eeeeee'},b={...a,path:path.slice()};g.setCars([a,b]);
- for(let frame=0;frame<34;frame++)g.updateCars(.25);
+ for(let frame=0;frame<110;frame++)g.updateCars(.25);
  assert(a.retired||b.retired);assert(a.retired||a.t>0);assert(b.retired||b.t>0);
  const station=add(10,8,'police');g.updateCars(.01);assert(g.getServiceCars().some(c=>c.owner===station));
  for(let x=13;x<=18;x++)add(x,7,'road');g.calc();g.updateCars(.01);assert(g.getServiceCars().some(c=>c.owner===station&&c.path.includes(g.idx(18,7))));
@@ -35,10 +70,10 @@ test('Inventory stores level and appearance, empties homes and restores exactly 
  g.takeInventory(0);g.placeMoved(g.idx(9,8));const b=restored.grid[g.idx(9,8)];assert.equal(b.level,4);assert.equal(b.palette,43);assert.equal(b.occ,0);assert.equal(b.yardTree,true);assert.equal(restored.inventory.length,0);g.placeMoved(g.idx(10,8));assert.equal(restored.grid[g.idx(10,8)],null);
  assert(!g.storeBuilding(restored.grid[g.idx(8,7)]));assert(!g.storeBuilding({type:'townhall'}));b.fire=1;assert(!g.storeBuilding(b));
 });
-test('Weather rolls once per day with exact 5% rain and conditional 20% flood thresholds',()=>{
- let s=reset();s.day=120;g.advanceWeather(()=>.05);assert(!g.isRaining());let calls=0;g.advanceWeather(()=>{calls++;return 0;});assert.equal(calls,0);
- s=reset();s.day=120;let rolls=[.049,.20];g.advanceWeather(()=>rolls.shift());assert(g.isRaining());assert(!g.isFlooding());assert.equal(s.weather.rainUntil,144);
- s=reset();s.day=120;rolls=[.049,.199];g.advanceWeather(()=>rolls.shift());assert(g.isFlooding());assert.equal(s.weather.floodUntil,192);assert.equal(g.floodDepth(),0);
+test('Weather rolls once per day with exact 10% rain and conditional 20% flood thresholds',()=>{
+ let s=reset();s.day=120;g.advanceWeather(()=>.10);assert(!g.isRaining());let calls=0;g.advanceWeather(()=>{calls++;return 0;});assert.equal(calls,0);
+ s=reset();s.day=120;let rolls=[.099,.20];g.advanceWeather(()=>rolls.shift());assert(g.isRaining());assert(!g.isFlooding());assert.equal(s.weather.rainUntil,144);
+ s=reset();s.day=120;rolls=[.099,.199];g.advanceWeather(()=>rolls.shift());assert(g.isFlooding());assert.equal(s.weather.floodUntil,192);assert.equal(g.floodDepth(),0);
  s.day=120.5;assert(g.floodDepth()>0&&g.floodDepth()<.24);s.day=121;assert.equal(g.floodDepth(),.24);assert.equal(g.floodDuration(0),72);assert.equal(g.floodDuration(.5),48);assert.equal(g.floodDuration(1),24);
  const saved=g.citySnapshot();g.restoreCity(JSON.parse(JSON.stringify(saved)));assert.deepEqual(g.getState().weather,saved.weather);assert(!g.beginVisit());g.getState().day=192;g.advanceWeather(()=>.99);assert(!g.isFlooding());assert.equal(g.getState().weather.floodUntil,0);
 });
@@ -72,17 +107,18 @@ test('Residential yard trees survive saves and clear the facade at every level a
  for(let level=1;level<=8;level++)for(let rot=0;rot<4;rot++){
   const base=g.capture({type:'residential',level,rot,yardTree:false}),withTree=g.capture({type:'residential',level,rot,yardTree:true});
   assert.equal(withTree.length,base.length+2);
-  const extra=withTree.filter(p=>!base.some(q=>JSON.stringify(q)===JSON.stringify(p)));
+  const extra=withTree.filter(p=>p.col==='#6a4f36'||['#3e9149','#49a95b','#58b765','#3f9f61','#63b958','#4bad70'].includes(p.col));
   assert.equal(extra.length,2);
-  for(const p of extra){assert(Math.abs(p.x)+p.sx/2<.5);assert(Math.abs(p.z)+p.sz/2<.5);for(const q of base){if(q.sy<.02||q.y<.02)continue;assert(!(Math.abs(p.x-q.x)<(p.sx+q.sx)/2&&Math.abs(p.z-q.z)<(p.sz+q.sz)/2&&Math.abs(p.y-q.y)<(p.sy+q.sy)/2),'tree intersects residence');}}
+  const ext=p=>({x:(Math.abs(Math.cos(p.ry))*p.sx+Math.abs(Math.sin(p.ry))*p.sz)/2,z:(Math.abs(Math.sin(p.ry))*p.sx+Math.abs(Math.cos(p.ry))*p.sz)/2});
+  for(const p of extra){const e=ext(p);assert(Math.abs(p.x)+e.x<.5);assert(Math.abs(p.z)+e.z<.5);for(const q of withTree){if(extra.includes(q)||q.sy<.02||q.y<.02)continue;const f=ext(q);assert(!(Math.abs(p.x-q.x)<e.x+f.x&&Math.abs(p.z-q.z)<e.z+f.z&&Math.abs(p.y-q.y)<(p.sy+q.sy)/2),'tree intersects residence');}}
  }
 });
 test('Moon follows a repeating lunar month and the sun warms toward the horizon',()=>{
  assert.equal(g.lunarPhase(0),0);assert(Math.abs(g.lunarPhase(29.53059/2)-.5)<1e-10);assert(Math.abs(g.lunarPhase(29.53059))<1e-10);
  const dawn=g.sunDiscColor({y:0}),noon=g.sunDiscColor({y:1});assert(dawn[1]<noon[1]);assert(dawn[2]<noon[2]);assert(noon[2]>.9);
 });
-test('Commercial materials preserve their colors while other buildings gain saturation',()=>{
- reset();assert(g.capture({type:'commercial',level:3}).every(p=>p.saturation===1));assert(g.capture({type:'residential',level:3}).every(p=>p.saturation===1.1));
+test('All building palettes receive the same saturation increase',()=>{
+ reset();assert(g.capture({type:'commercial',level:3}).every(p=>p.saturation===1.2));assert(g.capture({type:'residential',level:3}).every(p=>p.saturation===1.2));
  assert.notDeepEqual(g.vividColor('#a47962'),g.vividColor('#a47962',1));
 });
 test('Municipality hides future ordinances and legacy vertical halls keep their occupied cells',()=>{
@@ -269,8 +305,8 @@ test('Ticker stays active after exhausting history and uses news for existing bu
 test('Municipal foundation is free, connected, permanent and evolves through eight bounded models',()=>{
  const s=g.newState();g.setState(s);g.setSpeed(0);
  const hall=g.uniqueBuildings().find(b=>b.type==='townhall'),roads=g.uniqueBuildings().filter(b=>b.type==='road');
- assert.equal(roads.length,6);assert.equal(hall.cells.length,2);assert.equal(hall.w,2);assert.equal(hall.h,1);assert.equal(s.money,15000);assert(g.operational(hall.anchor));assert.equal(g.municipalRoads().size,6);
- const models=[];for(let level=1;level<=8;level++){s.cityLevel=level;g.calc();assert.equal(hall.level,level);const parts=g.capture({...hall,level,rot:0});models.push(JSON.stringify(parts));for(const part of parts){assert(Math.abs(part.x)+part.sx/2<=1.001);assert(Math.abs(part.z)+part.sz/2<=.501);}}
+ assert.equal(roads.length,6);assert.equal(hall.cells.length,4);assert.equal(hall.w,2);assert.equal(hall.h,2);assert.equal(s.money,15000);assert(g.operational(hall.anchor));assert.equal(g.municipalRoads().size,6);
+ const models=[];for(let level=1;level<=8;level++){s.cityLevel=level;g.calc();assert.equal(hall.level,level);const parts=g.capture({...hall,level,rot:0});models.push(JSON.stringify(parts));for(const part of parts){assert(Math.abs(part.x)+part.sx/2<=1.001);assert(Math.abs(part.z)+part.sz/2<=1.001);}}
  assert.equal(new Set(models).size,8);
  s.selected=hall.anchor;g.upgradeSelected();g.demolishSelected();g.moveSelected();assert.equal(s.grid[hall.anchor],hall);assert(!s.moving);
  g.openPopup(hall.anchor);assert.equal(nodes.get('#municipalModal').hidden,false);assert(nodes.get('#ordinanceList').innerHTML.includes('Vivienda accesible'));
@@ -381,7 +417,7 @@ test('Land purchase requires Urbanizar; rename costs 10000; fixed day and layers
 test('New geometry and every rectangular rotation remain within their parcels',()=>{for(const type of ['residential_block','park','coal','hospital','nuclear','recycling','university','transit','research','wastewater','school','police','office'])for(const level of type==='residential_block'?[4,8]:type==='park'?[4,5]:[1,g.DEF[type].max])for(const rot of [0,1,2,3]){const fp=g.footprint(type,rot,level),parts=g.capture({type,level,rot,palette:0});for(const p of parts){const ex=Math.abs(Math.cos(p.ry))*p.sx/2+Math.abs(Math.sin(p.ry))*p.sz/2,ez=Math.abs(Math.sin(p.ry))*p.sx/2+Math.abs(Math.cos(p.ry))*p.sz/2;assert(Math.abs(p.x)+ex<=fp.w/2+.02,`${type} N${level} rot${rot} X`);assert(Math.abs(p.z)+ez<=fp.h/2+.02,`${type} N${level} rot${rot} Z`);}}});
 
 test('Fusion requires all four homes at N4, including debug; old low-level fused saves remain compatible',()=>{const s=reset();s.cityLevel=4;for(let x=10;x<12;x++){add(x,9,'road');add(x,12,'road');}for(let x=10;x<12;x++)for(let z=10;z<12;z++)add(x,z,'residential',1,5);g.openPopup(g.idx(10,10));assert.equal(nodes.get('#mergeBtn').disabled,true);assert(!g.mergeSelected());s.debug=true;assert.equal(g.fusionGroup(),null);for(const b of g.uniqueBuildings())if(b.type==='residential')b.level=4;assert(g.mergeSelected());const snapshot=g.citySnapshot();snapshot.buildings.find(b=>b.type==='residential_block').baseLevel=1;g.restoreCity(snapshot);assert.equal(g.buildingDef(g.getState().grid[g.idx(10,10)]).cap[4],4*g.DEF.residential.cap[1]);});
-test('Asphalt is above paving at all upgraded road levels; tower geometry is bounded and economical',()=>{const s=reset(),b=add(10,10,'road');for(let level=2;level<=8;level++){b.level=level;const parts=g.captureRoad(b.anchor),paving=parts.filter(p=>p.col==='#b4b7a9'),asphalt=parts.filter(p=>p.col===g.roadColor(0));assert(paving.length&&asphalt.length);assert(Math.min(...asphalt.map(p=>p.y+p.sy/2))>Math.max(...paving.map(p=>p.y+p.sy/2)));}assert(g.geometryFor('cooling').indices.length/3<=64);s.layer='none';s.pollution=10;assert.equal(g.smogAmount(),0);s.pollution=20;assert(g.smogAmount()>0);s.pollution=70;assert(g.smogAmount()>0);s.layer='traffic';assert.equal(g.smogAmount(),0);g.render3D();});
+test('Asphalt is slightly below paving at all upgraded road levels; tower geometry is bounded and economical',()=>{const s=reset(),b=add(10,10,'road');for(let level=2;level<=8;level++){b.level=level;const parts=g.captureRoad(b.anchor),paving=parts.filter(p=>p.col==='#b4b7a9'),asphalt=parts.filter(p=>p.col===g.roadColor(0));assert(paving.length&&asphalt.length);assert(Math.max(...asphalt.map(p=>p.y+p.sy/2))<Math.min(...paving.map(p=>p.y+p.sy/2)));}assert(g.geometryFor('cooling').indices.length/3<=64);s.layer='none';s.pollution=10;assert.equal(g.smogAmount(),0);s.pollution=20;assert(g.smogAmount()>0);s.pollution=70;assert(g.smogAmount()>0);s.layer='traffic';assert.equal(g.smogAmount(),0);g.render3D();});
 
 test('Park expands northwest when east and south are unavailable',()=>{const s=reset();add(9,10,'road');const b=add(8,8,'park',4);for(let z=7;z<=10;z++)s.landUnlocked[g.idx(10,z)]=false;for(let x=7;x<=10;x++)s.landUnlocked[g.idx(x,10)]=false;g.openPopup(b.anchor);g.upgradeSelected();assert.equal(b.level,5);assert.equal(b.anchor,g.idx(7,7));assert.equal(b.cells.length,9);assert.strictEqual(s.grid[g.idx(8,8)],b);});
 test('Wastewater needs an orthogonal river neighbor for placement and relocation',()=>{const s=reset();add(8,7,'road');s.manualRotation=0;s.river[g.idx(9,10)]=true;assert(!g.canPlace(g.idx(8,8),'wastewater'));s.river[g.idx(9,9)]=true;const b=add(8,8,'wastewater');assert.equal(b.cells.length,2);add(12,7,'road');g.openPopup(b.anchor);g.moveSelected();g.placeMoved(g.idx(12,8));assert.equal(b.anchor,g.idx(8,8));s.river[g.idx(13,8)]=true;g.placeMoved(g.idx(12,8));assert.equal(b.anchor,g.idx(12,8));});
@@ -427,7 +463,7 @@ test('Park fusion rejects partial shared edges and compact legacy parks',()=>{
 test('Road markings follow lane count and every lit-level intersection has visual signals',()=>{
  const s=reset();const road=add(10,10,'road');add(9,10,'road');add(11,10,'road');s.river[road.anchor]=true;
  for(let level=1;level<=8;level++){road.level=level;const parts=g.captureRoad(road.anchor),lines=parts.filter(p=>['#e0d4b4','#eee8d3'].includes(p.col));assert.equal(lines.length,(g.ROAD_LANES[level]-1)*3);}
- s.river[road.anchor]=false;add(10,9,'road');for(const level of [3,4,8]){road.level=level;const parts=g.captureRoad(road.anchor),signals=parts.filter(p=>p.col==='#263a43'&&p.sy===.133);assert.equal(signals.length,level>=4?2:0);if(level>=4)assert(g.roadLamp(road.anchor,level));assert(parts.some(p=>['#e0d4b4','#eee8d3'].includes(p.col)));}
+ s.river[road.anchor]=false;add(10,9,'road');for(const level of [3,4,8]){road.level=level;const parts=g.captureRoad(road.anchor),signals=parts.filter(p=>p.col==='#263a43'&&p.sy===.133);assert.equal(signals.length,2);if(level>=4)assert(g.roadLamp(road.anchor,level));assert(parts.some(p=>['#e0d4b4','#eee8d3'].includes(p.col)));}
 });
 
 
