@@ -40,8 +40,16 @@ El botón de caja permite guardar hasta 256 edificios y volver a colocarlos sin 
 
 Para pasear, arrastra el muñeco hasta una carretera. En PC, clic o Esc libera el cursor; otro clic en el mapa vuelve a capturarlo. Con el cursor libre la vista no gira. En móvil se usa el joystick y el arrastre para mirar. El botón superior termina el paseo.
 
-Cada nuevo día se sortea un 5% de lluvia, con un 20% de inundación si llueve. La lluvia dura 24 horas; la inundación dura entre 24 y 72 horas según los bomberos operativos, su plantilla y suministros al iniciarse. Durante ella: ingresos de negocios −20%, producción industrial −15%, velocidad de vehículos −30% y satisfacción −8 puntos; no se puede pasear. Agua, lluvia y cielo cambian visualmente y los plazos se conservan al guardar.
+Cada nuevo día se sortea un 10% de lluvia, con un 20% de inundación si llueve. La lluvia dura 24 horas; la inundación dura entre 24 y 72 horas según los bomberos operativos, su plantilla y suministros al iniciarse. Durante ella: ingresos de negocios −20%, producción industrial −15%, velocidad de vehículos −30% y satisfacción −8 puntos; no se puede pasear. Agua, lluvia y cielo cambian visualmente y los plazos se conservan al guardar.
 
 Los parques aportan entretenimiento. Debug llena viviendas y plantillas, reanuda el tiempo al activarse y conserva los controles de velocidad. Las cifras visibles tienen como máximo dos decimales.
 
 Las pruebas automatizadas cubren lógica, guardado e interacción simulada de PC y móvil. No sustituyen la comprobación visual ni la captura real del cursor en cada navegador.
+
+## Modelos e intersecciones
+
+El Ayuntamiento ocupa 2×2 desde N1, incorpora parterres desde N2 y mantiene su nivel ligado al de la ciudad. Las sedes antiguas se amplían al cargar si el terreno contiguo está libre y conectado; si no hay espacio conservan su parcela sin desplazar otros edificios.
+
+Los cruces alternan el paso por ejes con intervalos de despeje y reserva de salida. Los semáforos muestran esa misma fase; esperar un rojo no elimina el vehículo. El asfalto queda ligeramente bajo la acera, los pasos de cebra siguen el sentido de circulación y luces y sombras se ajustan a la superficie receptora.
+
+Árboles residenciales de tamaño natural con probabilidad del 25%, fachadas más coloridas, cúpula dorada del teatro, cubo monumental giratorio, bancos más pequeños y fuentes animadas. El cielo aclara hacia el horizonte, el ocaso es más cálido y la lluvia usa gotas más finas. El color de nivel se aplica solo a su nombre.

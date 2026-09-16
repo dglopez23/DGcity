@@ -10,6 +10,15 @@ async function call(route,method='GET',data,session='',extra={}){const r=await h
 let a,b;
 const state={format:1,width:30,height:24,mapSeed:12,money:8500,day:8,tax:10,cityLevel:1,diseaseDays:0,crimeDays:0,alerts:0,debug:false,landUnlocked:Array(720).fill(true),river:Array(720).fill(false),unlockAt:{road:0},buildings:[]};
 
+
+test('Square town halls save at every city level while compact legacy halls remain valid',()=>{
+ for(let level=1;level<=8;level++)for(const [w,h] of [[2,2],[2,1],[1,2]]){
+  const city={...state,format:4,width:36,height:36,cityLevel:level,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[{type:'townhall',level,w,h,anchor:100,rot:0,palette:0,occ:0,fire:0}]};
+  const saved=validateCity(city);assert.equal(saved.buildings[0].w,w);assert.equal(saved.buildings[0].h,h);
+  if(w===2&&h===2)assert.throws(()=>validateCity({...city,buildings:[...city.buildings,{type:'residential',level:1,w:1,h:1,anchor:137,rot:0,palette:0,occ:0,fire:0}]}));
+ }
+});
+
 test('Inventory and weather validate independently of city occupancy and survive JSON round trips',()=>{
  const city={...state,format:4,width:36,height:36,day:121,cityLevel:8,landUnlocked:Array(1296).fill(true),river:Array(1296).fill(false),buildings:[],inventory:[],weather:{checkedDay:5,rainUntil:144,floodStart:120,floodUntil:192}};
  for(const [type,level,w,h] of [['residential',8,1,1],['solar',6,1,2],['solar_complex',6,2,2],['nuclear',3,2,2],['light_industrial_complex',5,2,1],['port',5,1,3],['wastewater',5,1,2]]){
