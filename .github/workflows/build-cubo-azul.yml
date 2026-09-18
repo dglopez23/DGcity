@@ -1,0 +1,20 @@
+name: Build Cubo Azul Blend
+on:
+  push:
+    branches: [chatgpt-cubo-azul-20260918]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+      - name: Build blend
+        run: blender --background --python tools/generate_cubo_azul_blend.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cubo_Azul_Monumento_N1
+          path: Cubo_Azul_Monumento_N1.blend
