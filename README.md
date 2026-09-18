@@ -38,6 +38,12 @@ Capital inicial: 15.000 €. Los costes de construcción y mejora son propios de
 
 El botón de caja permite guardar hasta 256 edificios y volver a colocarlos sin coste, conservando nivel y apariencia. Mientras están guardados no producen ni consumen; las viviendas se vacían. No se pueden guardar carreteras, el Ayuntamiento ni edificios en llamas. El inventario se conserva en el servidor.
 
+Los edificios guardados se agrupan por tipo, nivel y capacidad con un contador de unidades; cada unidad conserva su propia apariencia. Colocarlos mantiene activo el inventario. **Deshacer** revierte la última construcción, demolición, mejora, traslado, unión o acción de inventario durante 10 segundos, sin retroceder el reloj ni restaurar la tesorería completa. Los trazados de carretera y «Al máximo» se revierten como una sola acción.
+
+En móvil se requiere pantalla horizontal, con aviso y pausa en vertical. Un toque coloca el edificio sin confirmación adicional. Un dedo desplaza; el botón Cámara permite girar e inclinar. Con dos dedos se reconoce desplazamiento o zoom y se mantiene ese gesto hasta levantar los dedos. Deshacer está disponible en la barra inferior.
+
+La geometría estática se reconstruye al cambiar edificios, terreno o capa; ventanas e iluminación usan un lote de materiales separado. La red viaria y sus componentes se reutilizan, y las rutas almacenadas se validan contra sus costes de congestión. Los flujos sensibles a cargas se recalculan. Humo y fuego comparten un único lote con transparencia por vértice. En pausa se congelan los efectos decorativos y el render duerme hasta una interacción, salvo lluvia, inundaciones o animaciones de colocación pendientes. Las noticias continúan sin despertar el render; no se generan ni avanzan incendios con el tiempo detenido.
+
 Para pasear, arrastra el muñeco hasta una carretera. En PC, clic o Esc libera el cursor; otro clic en el mapa vuelve a capturarlo. Con el cursor libre la vista no gira. En móvil se usa el joystick y el arrastre para mirar. El botón superior termina el paseo.
 
 Cada nuevo día se sortea un 10% de lluvia, con un 20% de inundación si llueve. La lluvia dura 24 horas; la inundación dura entre 24 y 72 horas según los bomberos operativos, su plantilla y suministros al iniciarse. Durante ella: ingresos de negocios −20%, producción industrial −15%, velocidad de vehículos −30% y satisfacción −8 puntos; no se puede pasear. Agua, lluvia y cielo cambian visualmente y los plazos se conservan al guardar.
