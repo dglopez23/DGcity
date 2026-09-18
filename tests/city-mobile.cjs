@@ -16,7 +16,7 @@ function harness(mobile=true,width=390,height=844){
  const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:()=>({})},{get:(o,k)=>o[k]||(()=>({}))});document.querySelector('#glCanvas').getContext=()=>gl;
  const eventBus=node();const window={innerWidth:width,innerHeight:height,addEventListener:eventBus.addEventListener,emit:eventBus.emit,matchMedia:q=>({matches:mobile&&q.includes('pointer: coarse')})};
  const ctx={window,document,navigator:{userAgent:mobile?'Mozilla/5.0 iPhone':'Windows NT',maxTouchPoints:mobile?5:0},console,Math,performance:{now:()=>1000},requestAnimationFrame(){},setTimeout(){},clearTimeout(){},setInterval(){},fetch:()=>new Promise(()=>{}),AbortSignal,Float32Array,Uint16Array,devicePixelRatio:3,testGame:{}};
- const expose=`Object.assign(testGame,{visitDragMove,finishVisitDrag,getVisitDrag:()=>visitDrag,toggleInventory,takeInventory,cancelAction,storeBuilding,visitPointerMove,MOBILE,detectMobile,mobile,resetMobileGesture,mobilePointerDown,mobilePointerMove,mobilePointerUp,confirmMobilePlacement,mobileClosePanels,syncMobile,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,build,citySnapshot,restoreCity,renderUI,renderPalette,toggleAnalysis,openMunicipality,renderCityGuide,renderMobileJournal,getState:()=>S,getWalk:()=>walk,getCamera:()=>cam,projectPoint,worldFromCell,coord,idx,uniqueBuildings,resizeCanvas,getDrawSize:()=>[canvas.width,canvas.height]});})();`;
+ const expose=`Object.assign(testGame,{applyMobilePairGesture,undoLastAction,inventoryGroups,visitDragMove,finishVisitDrag,getVisitDrag:()=>visitDrag,toggleInventory,takeInventory,cancelAction,storeBuilding,visitPointerMove,MOBILE,detectMobile,mobile,resetMobileGesture,mobilePointerDown,mobilePointerMove,mobilePointerUp,confirmMobilePlacement,mobileClosePanels,syncMobile,beginVisit,endVisit,updateVisit,walkablePoint,updateCamera,build,citySnapshot,restoreCity,renderUI,renderPalette,toggleAnalysis,openMunicipality,renderCityGuide,renderMobileJournal,getState:()=>S,getWalk:()=>walk,getCamera:()=>cam,projectPoint,worldFromCell,coord,idx,uniqueBuildings,resizeCanvas,getDrawSize:()=>[canvas.width,canvas.height]});})();`;
  vm.createContext(ctx);vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/\}\)\(\);\s*$/,expose),ctx);
  const g=ctx.testGame,s=g.getState();s.debug=true;s.money=1e8;s.river.fill(false);s.landUnlocked.fill(true);s.tutorialDone=true;g.resizeCanvas();g.updateCamera();return {g,s,nodes,document,window};
 }
@@ -25,6 +25,15 @@ function point(g,x,z){const w=g.worldFromCell(x,z);g.updateCamera();return g.pro
 function tap(g,x,z,id=1){const p=point(g,x,z),e=pointer(id,p.x,p.y);g.mobilePointerDown(e);g.mobilePointerUp(e);}
 const cases=[];function test(name,fn){fn();cases.push(name);console.log('PASS',name)}
 
+test('Balance tutorial highlight is bounded to its step and clears after finishing',()=>{
+ const {g,s,nodes,document}=harness(false);s.debug=false;s.tutorialDone=false;s.tutorialStep=2;document.querySelector('#cityAccess').hidden=document.querySelector('#startScreen').hidden=true;g.renderCityGuide();assert(nodes.get('#balance').classList.contains('guide-focus'));assert(!nodes.get('#money').classList.contains('guide-focus'));
+ s.tutorialStep=3;g.renderCityGuide();assert(!nodes.get('#balance').classList.contains('guide-focus'));s.tutorialDone=true;s.adviceSeen=['townhall','heavy_industry','research','light_industry','monument'];g.renderCityGuide();g.renderCityGuide();assert(!nodes.get('#balance').classList.contains('guide-focus'));assert(!nodes.get('#money').classList.contains('guide-focus'));
+});
+test('Mobile requires landscape and separates pinch from pan and rotation',()=>{
+ const portrait=harness(true,390,844);assert.equal(portrait.nodes.get('#mobileOrientation').hidden,false);const {g,nodes}=harness(true,844,390);assert.equal(nodes.get('#mobileOrientation').hidden,true);assert.equal(nodes.get('#undoBtn').parentNode.id,'mobileNav');
+ const cam=g.getCamera(),yaw=cam.yaw,target=[...cam.target];g.mobilePointerDown(pointer(1,150,180));g.mobilePointerDown(pointer(2,250,180));g.mobilePointerMove(pointer(2,300,185));g.applyMobilePairGesture();assert(cam.dist<18);assert.equal(cam.yaw,yaw);assert.deepEqual([...cam.target],target);g.mobilePointerUp(pointer(2,300,185));g.mobilePointerUp(pointer(1,150,180));
+ const dist=cam.dist,previous=[...cam.target];g.mobilePointerDown(pointer(3,150,180));g.mobilePointerDown(pointer(4,250,180));g.mobilePointerMove(pointer(3,180,180));g.mobilePointerMove(pointer(4,280,180));g.applyMobilePairGesture();assert.equal(cam.dist,dist);assert.notDeepEqual([...cam.target],previous);assert.equal(cam.yaw,yaw);g.resetMobileGesture();
+});
 test('Visit starts only after dragging onto a road, including touch and flood rejection',()=>{
  for(const mobile of [true,false]){
   const {g,s,nodes,window}=harness(mobile);s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'road');const p=point(g,18,18),btn=nodes.get('#visitBtn');
@@ -36,11 +45,11 @@ test('Visit starts only after dragging onto a road, including touch and flood re
   s.weather={checkedDay:0,rainUntil:24,floodStart:0,floodUntil:72};btn.emit('pointerdown',start);assert.equal(g.getVisitDrag(),null);assert(!g.getWalk());
  }
 });
-test('Mobile inventory uses map taps, safe cancellation and confirmation before restoring',()=>{
+test('Mobile inventory restores directly, remains active and supports cancellation',()=>{
  const {g,s,nodes}=harness();s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'residential');g.toggleInventory();assert(nodes.get('#inventoryDrawer').classList.contains('open'));
  tap(g,18,18);assert.equal(s.inventory.length,1);assert.equal(s.grid[g.idx(18,18)],null);
- g.takeInventory(0);tap(g,19,18);assert.equal(s.inventory.length,1);assert.equal(s.grid[g.idx(19,18)],null);g.confirmMobilePlacement();assert.equal(s.inventory.length,0);assert.equal(s.grid[g.idx(19,18)].type,'residential');
- g.toggleInventory();tap(g,19,18);g.takeInventory(0);g.cancelAction();assert.equal(s.inventory.length,1);
+ g.takeInventory(0);tap(g,19,18);assert.equal(s.tool,'inventory');assert.equal(s.inventory.length,0);assert.equal(s.grid[g.idx(19,18)].type,'residential');
+ tap(g,19,18);g.takeInventory(0);g.cancelAction();assert.equal(s.inventory.length,1);
 });
 test('Desktop free cursor does not rotate the walking camera',()=>{
  const {g,s,nodes,document}=harness(false);s.grid.fill(null);s.municipalVersion=0;s.civicRoad=null;g.build(g.idx(18,18),'road');g.beginVisit(g.idx(18,18));const walk=g.getWalk(),yaw=walk.yaw;
@@ -58,10 +67,10 @@ test('Mobile boot reparents existing controls, retains desktop DOM and limits dr
 });
 test('Single-finger pan and two-finger pinch never place buildings',()=>{
  const {g,s}=harness();s.tool='residential';const cash=s.money,cam=g.getCamera(),before=[...cam.target];g.mobilePointerDown(pointer(1,180,300));g.mobilePointerMove(pointer(1,220,330));g.mobilePointerUp(pointer(1,220,330));assert.notDeepEqual([...cam.target],before);assert.equal(s.money,cash);assert.equal(g.mobile.cell,-1);
- const distance=cam.dist;g.mobilePointerDown(pointer(1,120,300));g.mobilePointerDown(pointer(2,220,300));g.mobilePointerMove(pointer(2,280,300));assert(cam.dist<distance);g.mobilePointerUp(pointer(2,280,300));g.mobilePointerUp(pointer(1,120,300));assert.equal(s.money,cash);assert.equal(g.mobile.cell,-1);
+ const distance=cam.dist;g.mobilePointerDown(pointer(1,120,300));g.mobilePointerDown(pointer(2,220,300));g.mobilePointerMove(pointer(2,280,300));g.applyMobilePairGesture();assert(cam.dist<distance);g.mobilePointerUp(pointer(2,280,300));g.mobilePointerUp(pointer(1,120,300));assert.equal(s.money,cash);assert.equal(g.mobile.cell,-1);
 });
-test('Buildings preview before confirmation, and interrupted road drags cost nothing',()=>{
- const {g,s}=harness();s.tool='residential';const cash=s.money;tap(g,15,18);assert.equal(s.money,cash);assert.equal(g.mobile.cell,g.idx(15,18));g.confirmMobilePlacement();assert.equal(s.grid[g.idx(15,18)].type,'residential');
+test('Buildings place directly, and interrupted road drags cost nothing',()=>{
+ const {g,s}=harness();s.tool='residential';const cash=s.money;tap(g,15,18);assert.equal(g.mobile.cell,-1);assert.equal(s.grid[g.idx(15,18)].type,'residential');
  s.tool='road';const p=point(g,20,17),q=point(g,21,17),before=s.money;g.mobilePointerDown(pointer(1,p.x,p.y));g.mobilePointerMove(pointer(1,q.x,q.y));g.mobilePointerDown(pointer(2,q.x+70,q.y));g.mobilePointerUp(pointer(2,q.x+70,q.y));g.mobilePointerUp(pointer(1,q.x,q.y));assert.equal(s.money,before);assert.equal(s.grid[g.idx(21,17)],null);
  g.mobilePointerDown(pointer(1,p.x,p.y));g.mobilePointerMove(pointer(1,q.x,q.y));g.mobilePointerUp(pointer(1,q.x,q.y));assert.equal(s.grid[g.idx(21,17)].type,'road');
 });
@@ -77,7 +86,7 @@ test('Tutorial uses touch instructions and registry paginates the full stored hi
  const {g,s,nodes,document}=harness();s.debug=false;s.tutorialDone=false;s.tutorialStep=0;document.querySelector('#cityAccess').hidden=document.querySelector('#startScreen').hidden=true;g.renderCityGuide();assert(nodes.get('#guideText').textContent.includes('Dos dedos'));s.newsSeen=Array.from({length:65},(_,i)=>'Noticia '+i);g.mobile.journalPage=3;g.renderMobileJournal();assert.equal(nodes.get('#mobileNews').children.length,5);assert.equal(nodes.get('#mobileNewsNext').disabled,true);
 });
 test('Inspection keeps upgrades and relocation accessible, and renaming uses a touch form',()=>{
- const {g,s,nodes}=harness();s.cityLevel=4;g.build(g.idx(15,18),'residential');s.tool='inspect';tap(g,15,18);assert(nodes.get('#buildingPopup').classList.contains('visible'));const house=s.grid[g.idx(15,18)];nodes.get('#upgradeBtn').click();assert.equal(house.level,2);nodes.get('#moveBtn').click();tap(g,16,19);assert.equal(s.grid[g.idx(16,19)],null);g.confirmMobilePlacement();assert.equal(s.grid[g.idx(16,19)],house);
+ const {g,s,nodes}=harness();s.cityLevel=4;g.build(g.idx(15,18),'residential');s.tool='inspect';tap(g,15,18);assert(nodes.get('#buildingPopup').classList.contains('visible'));const house=s.grid[g.idx(15,18)];nodes.get('#upgradeBtn').click();assert.equal(house.level,2);nodes.get('#moveBtn').click();tap(g,16,19);assert.equal(s.grid[g.idx(16,19)],house);
  nodes.get('#cityTitle').click();assert.equal(nodes.get('#mobileRename').hidden,false);nodes.get('#mobileRenameInput').value='Ciudad táctil';nodes.get('#mobileRenameForm').emit('submit');assert.equal(s.cityName,'Ciudad táctil');assert.equal(nodes.get('#mobileRename').hidden,true);
 });
 console.log(`${cases.length} mobile input/state tests passed`);
